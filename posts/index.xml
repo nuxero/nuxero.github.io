@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on HectorZelaya.Dev</title>
+    <link>https://www.hectorzelaya.dev/posts/</link>
+    <description>Recent content in Posts on HectorZelaya.Dev</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 10 Mar 2019 16:39:27 -0600</lastBuildDate>
+    
+	<atom:link href="https://www.hectorzelaya.dev/posts/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>What Is Devops</title>
+      <link>https://www.hectorzelaya.dev/2019/what-is-devops/</link>
+      <pubDate>Sun, 10 Mar 2019 16:39:27 -0600</pubDate>
+      
+      <guid>https://www.hectorzelaya.dev/2019/what-is-devops/</guid>
+      <description>What is DevOps? The term &amp;ldquo;DevOps&amp;rdquo; comes from the fusion of the words &amp;ldquo;Development&amp;rdquo; and &amp;ldquo;Operations&amp;rdquo;. Essentially the main objective of the DevOps philosophy is to reduce the silos between the Development and Operations departments in order to improved the delivery of software products.
+DevOps aims to motivate collaboration between two areas that traditionally have been looked as two different entities with different objectives. But this not only applies to just these two, QA and InfoSec play an important role and hence suit perfectly into the application field.</description>
+    </item>
+    
+  </channel>
+</rss>

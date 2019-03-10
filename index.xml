@@ -6,7 +6,34 @@
     <description>Recent content in HectorZelaya.Dev on HectorZelaya.Dev</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
+    <lastBuildDate>Sun, 10 Mar 2019 16:39:27 -0600</lastBuildDate>
     <atom:link href="/" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>What Is Devops</title>
+      <link>https://www.hectorzelaya.dev/2019/what-is-devops/</link>
+      <pubDate>Sun, 10 Mar 2019 16:39:27 -0600</pubDate>
+      
+      <guid>https://www.hectorzelaya.dev/2019/what-is-devops/</guid>
+      <description>
+
+&lt;h1 id=&#34;what-is-devops&#34;&gt;What is DevOps?&lt;/h1&gt;
+
+&lt;p&gt;The term &amp;ldquo;DevOps&amp;rdquo; comes from the fusion of the words &amp;ldquo;Development&amp;rdquo; and &amp;ldquo;Operations&amp;rdquo;. Essentially the main objective of the DevOps philosophy is to &lt;strong&gt;reduce the silos between the Development and Operations departments in order to improved the delivery of software products&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;DevOps aims to motivate collaboration between two areas that traditionally have been looked as two different entities with different objectives. But this not only applies to just these two, QA and InfoSec play an important role and hence suit perfectly into the application field.&lt;/p&gt;
+
+&lt;p&gt;At the end of the day, the key element behind DevOps is &amp;ldquo;collaboration&amp;rdquo;. Developers, operation staff, testers and information security officers, all working together as part of the same team with the goal of being able to deploy more, more often.&lt;/p&gt;
+
+&lt;h2 id=&#34;culture-processes-and-tools&#34;&gt;Culture, Processes and Tools.&lt;/h2&gt;
+
+&lt;p&gt;DevOps is not a person, neither a position nor a department. Its implementation is not about hiring a &amp;ldquo;DevOps Engineer&amp;rdquo;, but is a &lt;strong&gt;culture&lt;/strong&gt; that includes both technical and non-technical staff, from the CEO of the company to the junior developer.&lt;/p&gt;
+
+&lt;p&gt;Another key component of DevOps is &amp;ldquo;Automation&amp;rdquo;, but to be able to automate, there has to be something to be automated. These are the &lt;strong&gt;processes&lt;/strong&gt; which need to be defined taking into account the roles and responsabilities of all the involved people.&lt;/p&gt;
+
+&lt;p&gt;And finally there are the tools, which are pieces of sofware that engineers will implement in order to support the workflows produced by the collaboration. Tools will allow to execute code testing, track code changes, deploy the application and monitor its performance.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title></title>
