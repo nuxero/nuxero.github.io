@@ -1,35 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>HectorZelaya.Dev on HectorZelaya.Dev</title>
+    <title>HectorZelaya.dev</title>
     <link>https://www.hectorzelaya.dev/</link>
-    <description>Recent content in HectorZelaya.Dev on HectorZelaya.Dev</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <description>Recent content on HectorZelaya.dev</description>
+    <generator>Hugo</generator>
     <language>en</language>
     <lastBuildDate>Sun, 10 Mar 2019 16:39:27 -0600</lastBuildDate>
-    <atom:link href="/" rel="self" type="application/rss+xml" />
-    
+    <atom:link href="https://www.hectorzelaya.dev/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Posts</title>
-      <link>https://www.hectorzelaya.dev/posts/</link>
+      <title>What Is Devops</title>
+      <link>https://www.hectorzelaya.dev/posts/what-is-devops/</link>
       <pubDate>Sun, 10 Mar 2019 16:39:27 -0600</pubDate>
-      
-      <guid>https://www.hectorzelaya.dev/posts/</guid>
-      <description></description>
+      <guid>https://www.hectorzelaya.dev/posts/what-is-devops/</guid>
+      <description>&lt;h1 id=&#34;what-is-devops&#34;&gt;&#xA;  What is DevOps?&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#what-is-devops&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;The term &amp;ldquo;DevOps&amp;rdquo; comes from the fusion of the words &amp;ldquo;Development&amp;rdquo; and &amp;ldquo;Operations&amp;rdquo;. Essentially the main objective of the DevOps philosophy is to &lt;strong&gt;reduce the silos between the Development and Operations departments in order to improve the delivery of software products&lt;/strong&gt;.&lt;/p&gt;&#xA;&lt;p&gt;DevOps aims to motivate collaboration between two areas that traditionally have been looked as two different entities with different objectives. But this not only applies to just these two, QA and InfoSec play an important role and hence suit perfectly into the application field.&lt;/p&gt;</description>
     </item>
-    
     <item>
       <title></title>
       <link>https://www.hectorzelaya.dev/about/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
       <guid>https://www.hectorzelaya.dev/about/</guid>
-      <description>&lt;h1 id=&#34;about-me&#34;&gt;About Me.&lt;/h1&gt;
-&lt;p&gt;My name is &lt;em&gt;Hector Zelaya&lt;/em&gt;. I am from El Salvador, a small (and beautiful) country from Central America. I am a computer software engineer.&lt;/p&gt;
-&lt;p&gt;Since 2015 I&amp;rsquo;ve been doing a little bit of everything: working with infrastructure &amp;amp; servers, programming, writing end-to-end tests, blogging and writing &amp;ldquo;techie&amp;rdquo; documentation. I love to learn new things every day and of course that I enjoy a good challenge.&lt;/p&gt;
-&lt;p&gt;Out of the office I like to play the guitar and the piano, I also sing and play video games. I am happily married with the most wonderful woman in the world and I am the father of a smart and beautiful girl.&lt;/p&gt;
-&lt;p&gt;I hope you enjoy my website.&lt;/p&gt;
-</description>
+      <description>&lt;h1 id=&#34;about-me&#34;&gt;&#xA;  About Me.&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#about-me&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;p&gt;My name is &lt;em&gt;Hector Zelaya&lt;/em&gt;. I am from El Salvador, a small (and beautiful) country from Central America. I am a computers software engineer.&lt;/p&gt;&#xA;&lt;p&gt;Since 2015 I&amp;rsquo;ve been doing a little bit of everything: working with servers, programming, blogging and writing &amp;ldquo;techie&amp;rdquo; documentation. I love to learn new things every day, and of course that I enjoy a good challenge!&lt;/p&gt;</description>
     </item>
-    
   </channel>
 </rss>
