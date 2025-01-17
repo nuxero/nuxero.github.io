@@ -6,8 +6,15 @@
     <description>Recent content in Posts on HectorZelaya.dev</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 10 Mar 2019 16:39:27 -0600</lastBuildDate>
+    <lastBuildDate>Fri, 17 Jan 2025 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://www.hectorzelaya.dev/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Git 101: The Basics</title>
+      <link>https://www.hectorzelaya.dev/posts/git-basics/</link>
+      <pubDate>Fri, 17 Jan 2025 00:00:00 +0000</pubDate>
+      <guid>https://www.hectorzelaya.dev/posts/git-basics/</guid>
+      <description>&lt;h1 id=&#34;git-101-initialize-a-repo-and-create-versions&#34;&gt;&#xA;  Git 101: Initialize a repo and create versions.&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#git-101-initialize-a-repo-and-create-versions&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;h2 id=&#34;what-is-git&#34;&gt;&#xA;  What is Git?&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#what-is-git&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;Has this ever happened to you?&lt;/p&gt;&#xA;&lt;p&gt;&lt;img src=&#34;https://www.hectorzelaya.dev/images/documents-image.png&#34; alt=&#34;Versions mess&#34;&gt;&lt;/p&gt;&#xA;&lt;p&gt;It undeniable that files are part of our daily &amp;ldquo;computer life&amp;rdquo;, but some times they are a bit complex to work with. This applies to either documentation, source code or that report that our teachers or bosses require (often urgently).&lt;/p&gt;</description>
+    </item>
     <item>
       <title>What Is Devops</title>
       <link>https://www.hectorzelaya.dev/posts/what-is-devops/</link>
