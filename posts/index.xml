@@ -6,8 +6,15 @@
     <description>Recent content in Posts on HectorZelaya.dev</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Fri, 08 May 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 31 May 2026 20:16:42 -0600</lastBuildDate>
     <atom:link href="https://www.hectorzelaya.dev/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>If Your Business Relies on Open Source, You Want to Contribute Back</title>
+      <link>https://www.hectorzelaya.dev/posts/why-contribute-to-open-source/</link>
+      <pubDate>Sun, 31 May 2026 20:16:42 -0600</pubDate>
+      <guid>https://www.hectorzelaya.dev/posts/why-contribute-to-open-source/</guid>
+      <description>&lt;p&gt;Like The Force in Star Wars, open-source software surrounds us, penetrates our servers, and binds the digital universe together. It is the invisible engine powering modern business.&lt;/p&gt;&#xA;&lt;p&gt;Whether you realize it or not, your company is likely standing on the shoulders of open-source giants. We rely on the Linux kernel to run our cloud infrastructure, web servers like Nginx or Apache to host our sites, and technologies tools like WebRTC to exchange media in real-time.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>C in the Times of AI</title>
       <link>https://www.hectorzelaya.dev/posts/c-in-the-times-of-ai/</link>

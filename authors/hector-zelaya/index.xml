@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Hector Zelaya on HectorZelaya.dev</title>
+    <link>https://www.hectorzelaya.dev/authors/hector-zelaya/</link>
+    <description>Recent content in Hector Zelaya on HectorZelaya.dev</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 31 May 2026 20:16:42 -0600</lastBuildDate>
+    <atom:link href="https://www.hectorzelaya.dev/authors/hector-zelaya/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>If Your Business Relies on Open Source, You Want to Contribute Back</title>
+      <link>https://www.hectorzelaya.dev/posts/why-contribute-to-open-source/</link>
+      <pubDate>Sun, 31 May 2026 20:16:42 -0600</pubDate>
+      <guid>https://www.hectorzelaya.dev/posts/why-contribute-to-open-source/</guid>
+      <description>&lt;p&gt;Like The Force in Star Wars, open-source software surrounds us, penetrates our servers, and binds the digital universe together. It is the invisible engine powering modern business.&lt;/p&gt;&#xA;&lt;p&gt;Whether you realize it or not, your company is likely standing on the shoulders of open-source giants. We rely on the Linux kernel to run our cloud infrastructure, web servers like Nginx or Apache to host our sites, and technologies tools like WebRTC to exchange media in real-time.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>C in the Times of AI</title>
+      <link>https://www.hectorzelaya.dev/posts/c-in-the-times-of-ai/</link>
+      <pubDate>Fri, 08 May 2026 00:00:00 +0000</pubDate>
+      <guid>https://www.hectorzelaya.dev/posts/c-in-the-times-of-ai/</guid>
+      <description>&lt;h1 id=&#34;c-in-the-times-of-ai&#34;&gt;&#xA;  C in the Times of AI&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#c-in-the-times-of-ai&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h1&gt;&#xA;&lt;h2 id=&#34;the-ai-coding-revolution&#34;&gt;&#xA;  The AI coding revolution&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#the-ai-coding-revolution&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;p&gt;AI coding agents are everywhere. In just a couple of years they went from novelty to necessity in many software teams. Tools like Copilot, Cursor, Kiro, and a growing list of alternatives promise to write code faster than any human could. And they deliver — sort of.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
