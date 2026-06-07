@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>
+  Spec&#39;ing my way to Mixing and Mastering a Song in Reaper with reaper-mcp and Kiro IDE · HectorZelaya.dev
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Hector Zelaya">
+<meta name="description" content="What happens if you treat music production same as software development by leveraging AI to tackle the tedious and focus on creativity? Enter spec-driven music production">
+<meta name="keywords" content="blog,developer,personal">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Spec&#39;ing my way to Mixing and Mastering a Song in Reaper with reaper-mcp and Kiro IDE">
+  <meta name="twitter:description" content="What happens if you treat music production same as software development by leveraging AI to tackle the tedious and focus on creativity? Enter spec-driven music production">
+
+<meta property="og:url" content="https://www.hectorzelaya.dev/posts/spec-driven-audio-engineering/">
+  <meta property="og:site_name" content="HectorZelaya.dev">
+  <meta property="og:title" content="Spec&#39;ing my way to Mixing and Mastering a Song in Reaper with reaper-mcp and Kiro IDE">
+  <meta property="og:description" content="What happens if you treat music production same as software development by leveraging AI to tackle the tedious and focus on creativity? Enter spec-driven music production">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-06-07T11:26:42-06:00">
+    <meta property="article:modified_time" content="2026-06-07T11:26:42-06:00">
+
+
+
+
+<link rel="canonical" href="https://www.hectorzelaya.dev/posts/spec-driven-audio-engineering/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.min.f8ac2fdd0cb7e56145845d949b5c036d40cd5061c013fd446f2f54a63ade62e8.css" integrity="sha256-&#43;Kwv3Qy35WFFhF2Um1wDbUDNUGHAE/1Eby9UpjreYug=" crossorigin="anonymous" media="screen" />
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.min.ad48f476275974885bdc03d5251e3cdbe1678c54a63ff772376b0ed2adc468dd.css" integrity="sha256-rUj0didZdIhb3APVJR482&#43;FnjFSmP/dyN2sO0q3EaN0=" crossorigin="anonymous" media="screen" />
+  
+
+
+
+ 
+
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="https://www.hectorzelaya.dev/">
+      HectorZelaya.dev
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about/">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="https://www.hectorzelaya.dev/posts/spec-driven-audio-engineering/">
+              Spec&#39;ing my way to Mixing and Mastering a Song in Reaper with reaper-mcp and Kiro IDE
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2026-06-07T11:26:42-06:00">
+                June 7, 2026
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              7-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/hector-zelaya/">Hector Zelaya</a></div>
+
+          
+          
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <p>Producing music and writing code have surprisingly a lot in common. Both require a delicate balance of rigid structure and free-flowing creativity. Just like a developer has to wrestle with boilerplate code, environment setups, and syntax errors before they can build a killer feature, an audio engineer spends hours on tedious tasks—tweaking volume knobs, notch-filtering harsh frequencies, and meticulously gain-staging—before they can actually focus on the vibe of a track.</p>
+<p>But what if you could treat mixing and mastering exactly like a software development project? In the coding world, we increasingly use AI to automate the boilerplate and handle repetitive refactoring. Now, we can do the exact same thing for music. What if you could just write (or generate) a text file detailing what you want, and an AI handles the tedious execution?</p>
+<p>That&rsquo;s the idea behind &ldquo;Spec-Driven Audio Engineering.&rdquo; In this post, I&rsquo;m going to show you how I use Kiro IDE, the Model Context Protocol (MCP), and Reaper to automate the heavy lifting of mixing and mastering, freeing you up to be the creative director of your music.</p>
+<p>Here is the stack we are using:</p>
+<ul>
+<li><strong><a href="https://www.reaper.fm/"  class="external-link" target="_blank" rel="noopener">Reaper</a>:</strong> The ultimate sandbox Digital Audio Workstation (DAW). It&rsquo;s incredibly customizable.</li>
+<li><strong><a href="https://kiro.dev/"  class="external-link" target="_blank" rel="noopener">Kiro IDE</a>:</strong> AWS&rsquo;s agentic IDE that uses &ldquo;spec-driven development&rdquo;—meaning it writes and executes code based on requirements you provide.</li>
+<li><strong><a href="https://github.com/nuxero/reaper-mcp"  class="external-link" target="_blank" rel="noopener">Reaper MCP</a>:</strong> The magic bridge that lets AI agents interact safely with local tools and APIs.</li>
+<li><strong><a href="https://github.com/nuxero/reaper-daw"  class="external-link" target="_blank" rel="noopener">Reaper DAW Power</a>:</strong> The set of instructions that makes Kiro an experimented audio engineer rather than a merely code generation tool.</li>
+</ul>
+<p>Let&rsquo;s dive into how you can use Kiro&rsquo;s Spec Mode to autonomously guide Reaper through gain staging, vocal processing, and mastering.</p>
+<p>You can listen the end result of this process on my latest album: <a href="https://artists.landr.com/991043881421"  class="external-link" target="_blank" rel="noopener">Reina I</a></p>
+<h2 id="part-1-setting-up-the-agentic-studio-environment">
+  <strong>Part 1: Setting up the Agentic Studio Environment</strong>
+  <a class="heading-link" href="#part-1-setting-up-the-agentic-studio-environment">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Before we can start mixing, we need to get our AI talking to our DAW. There are a few moving parts here, but you only have to set them up once.</p>
+<p><strong>Installing reaper-mcp</strong>
+First, we need reaper-mcp. This tool acts as the translator between the AI and Reaper&rsquo;s API.</p>
+<ul>
+<li>Head over to the GitHub repo: <a href="https://github.com/nuxero/reaper-mcp"  class="external-link" target="_blank" rel="noopener">https://github.com/nuxero/reaper-mcp</a>.</li>
+<li>Follow the instructions to pull the code and install it on your system. It essentially runs a local server that exposes Reaper&rsquo;s controls to MCP.</li>
+</ul>
+<p><strong>Running the Lua Bridge Script in Reaper</strong>
+For the MCP server to actually control your DAW, Reaper needs to be listening.</p>
+<ul>
+<li>Open Reaper.</li>
+<li>Load the Lua bridge script provided in the reaper-mcp package (usually done via the Actions List -&gt; New action -&gt; Load ReaScript).</li>
+<li>Run it. The script will sit quietly in the background of your session, catching commands from the MCP server and executing them inside Reaper.</li>
+</ul>
+<p><strong>Enabling reaper-daw power on Kiro IDE</strong>
+Next, we open Kiro IDE. Kiro has a feature called <a href="https://kiro.dev/powers/"  class="external-link" target="_blank" rel="noopener">&ldquo;Powers&rdquo;</a>, which are basically context plugins that give the AI control over external systems and also instruct the Kiro to create tool-based spec rather than code-based ones. We need to install the specific Kiro power that interacts with our setup.</p>
+<p>To install this custom power directly from its public GitHub URL, follow these steps:</p>
+<ul>
+<li>Open the <strong>Powers panel</strong> in Kiro IDE.</li>
+<li>Select <strong>Add power from GitHub</strong>.</li>
+<li>Enter the repository URL: <a href="https://github.com/nuxero/reaper-daw"  class="external-link" target="_blank" rel="noopener">https://github.com/nuxero/reaper-daw</a></li>
+<li>Click <strong>Install</strong>.</li>
+</ul>
+<p><strong>The One-Time Config Tweak</strong>
+There is one final step. The newly installed power needs to know exactly where to find the server you set up earlier. Open the power&rsquo;s MCP configuration in Kiro and update the path so it points directly to your local reaper-mcp installation folder.</p>
+<p>Once you hit save and Kiro connects, it&rsquo;s like Neo downloading Kung Fu in <em>The Matrix</em>—suddenly, the IDE knows exactly how to navigate your Reaper session.</p>
+<p>You can verify the connection by opening the Kiro chat and simply typing, &ldquo;List my Reaper tracks.&rdquo; If it lists your kick, snare, and vocals, you are good to go.</p>
+<h2 id="part-2-the-flow-of-spec-driven-mixing">
+  <strong>Part 2: The Flow of Spec-Driven Mixing</strong>
+  <a class="heading-link" href="#part-2-the-flow-of-spec-driven-mixing">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Usually, producing a song involves listening, clicking through plugins, turning knobs, listening again, and repeating until you lose your mind. Is an art of itself that many people enjoys, but in my case it drains my creativity.</p>
+<p>With spec-driven mixing, we can completely change the workflow by utilizing Kiro&rsquo;s built-in <strong>Spec Mode</strong>. Instead of manually tweaking settings, we give Kiro a high-level prompt, and it generates the structured set of rules for us.</p>
+<p>The standard Kiro loop looks like this:</p>
+<ol>
+<li><strong>Prompt:</strong> You switch Kiro&rsquo;s chat to <strong>Spec Mode</strong> and enter your prompt.</li>
+<li><strong>Spec Generation:</strong> Kiro automatically creates three foundational files based on your request: requirements.md, design.md, and tasks.md.</li>
+<li><strong>Review:</strong> You review these three files to ensure the AI understands the goals and best practices.</li>
+<li><strong>Execution:</strong> You tell Kiro to run the tasks, sending commands through reaper-mcp to adjust your actual session.</li>
+</ol>
+<h2 id="part-3-spec">
+  <strong>Part 3: Spec&rsquo;ing out Gain Staging</strong>
+  <a class="heading-link" href="#part-3-spec">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Gain staging is the act of balancing your raw tracks so they sit at a healthy volume before you add any plugins. It&rsquo;s incredibly important, but totally boring. It&rsquo;s the perfect first task for an AI.</p>
+<p>I open the Kiro chat window, switch to <strong>Spec Mode</strong>, and drop in this exact prompt:</p>
+<p><em>&ldquo;Enable Reaper power and create a spec for static mixing and gain staging this song. Implement best practices and set appropriate levels based on pre-fader loudness and peak hold.&rdquo;</em></p>
+<p>Kiro gets to work and drafts the <code>requirements.md</code>, <code>design.md</code>, and <code>tasks.md</code>. I review them to make sure it&rsquo;s targeting safe headroom levels. Once I approve and run the tasks, Kiro uses reaper-mcp to scan the peak and loudness info of the audio files. It calculates exactly how many decibels each track needs to go up or down and automatically adjusts the clip gain across the entire session. As a result, the mix is mathematically balanced without touching a single fader!</p>
+<h2 id="part-4-spec">
+  <strong>Part 4: Spec&rsquo;ing out Vocal Processing</strong>
+  <a class="heading-link" href="#part-4-spec">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Now we move from math to vibe. Vocals need to sit right on top of the mix.</p>
+<p>I go back to Kiro&rsquo;s chat window in <strong>Spec Mode</strong> and type:</p>
+<p><em>&ldquo;Enable Reaper power and create a spec for applying fx chain to vocal track. Implement best practices for a clear, bright vocals with enough space and preventing vocal masking&rdquo;</em></p>
+<p>Again, I review the generated <code>requirements.md</code>, <code>design.md</code>, and <code>tasks.md</code> files. Because the AI is leaning on &ldquo;best practices,&rdquo; it knows to include subtractive EQ, compression, and spatial routing, meaning nobody ends up with a lead singer sounding like they are speaking Parsel to Voldemort.</p>
+<p>When executed, Kiro opens Reaper&rsquo;s API, loads the necessary EQ, Compression, and routing setups directly onto the vocal track, and dials in the parameters based on the design spec.</p>
+<h2 id="part-5-spec">
+  <strong>Part 5: Spec&rsquo;ing out the Master</strong>
+  <a class="heading-link" href="#part-5-spec">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>The mix sounds good, but now it needs that final polish so it sounds loud and competitive on streaming platforms.</p>
+<p>One last time in <strong>Spec Mode</strong>, I enter:</p>
+<p><em>&ldquo;Enable Reaper power and create a spec for mastering. Implement best practices for a well glued mix with proper LUFS for streaming platforms&rdquo;</em></p>
+<p>Kiro generates the final set of spec documents, detailing the master bus compression and limiting required to hit that standard ~12-10 LUFS target. When Kiro executes the tasks, it analyzes the post-fader output and adjusts the mastering chain parameters to ensure it hits the exact required loudness without clipping.</p>
+<h2 id="conclusion">
+  <strong>Conclusion</strong>
+  <a class="heading-link" href="#conclusion">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>So, does an AI-spec&rsquo;d mix sound good?</p>
+<p>The truth is, <strong>it gets you 80% of the way</strong> there. It handles the tedious balancing, sets up your routing, and gives you a fantastic starting point. You still need human ears to make the creative decisions—maybe the snare needs a bit more grit, or the reverb needs to be darker—but you are making those decisions without ear fatigue.</p>
+<p>Treating a mix like a codebase with strict requirements allows for incredibly fast iteration. If you realize your vocals are always too loud, you just update the spec via Kiro&rsquo;s chat, run it, and the AI fixes it instantly.</p>
+<p>If you want to spend more time being creative and less time turning knobs, this is a workflow I highly recommend. Your ears will thank you.</p>
+
+      </div>
+
+
+      <footer>
+        
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2015 -
+    
+    2026
+     Hector Zelaya 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.min.6ae284be93d2d19dad1f02b0039508d9aab3180a12a06dcc71b0b0ef7825a317.js" integrity="sha256-auKEvpPS0Z2tHwKwA5UI2aqzGAoSoG3McbCw73gloxc="></script>
+  
+
+  
+
+  
+
+
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-DM273NM2FB"></script>
+      <script>
+        var doNotTrack = false;
+        if ( true ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-DM273NM2FB');
+        }
+      </script>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+
+</html>
