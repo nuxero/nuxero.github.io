@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <title>
+  Writing My First Linux Kernel Patch: From User Space to Kernel with Kiro IDE · HectorZelaya.dev
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Hector Zelaya">
+<meta name="description" content="How a broken gamepad led me to write my first Linux kernel patch—navigating HID drivers, NixOS kernel development, and the mailing list submission process with help from Kiro IDE">
+<meta name="keywords" content="blog,developer,personal">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Writing My First Linux Kernel Patch: From User Space to Kernel with Kiro IDE">
+  <meta name="twitter:description" content="How a broken gamepad led me to write my first Linux kernel patch—navigating HID drivers, NixOS kernel development, and the mailing list submission process with help from Kiro IDE">
+
+<meta property="og:url" content="http://localhost:1313/posts/first-kernel-patch/">
+  <meta property="og:site_name" content="HectorZelaya.dev">
+  <meta property="og:title" content="Writing My First Linux Kernel Patch: From User Space to Kernel with Kiro IDE">
+  <meta property="og:description" content="How a broken gamepad led me to write my first Linux kernel patch—navigating HID drivers, NixOS kernel development, and the mailing list submission process with help from Kiro IDE">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-06-14T11:26:42-06:00">
+    <meta property="article:modified_time" content="2026-06-14T11:26:42-06:00">
+
+
+
+
+<link rel="canonical" href="http://localhost:1313/posts/first-kernel-patch/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.css" media="screen">
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.css" media="screen">
+  
+
+
+
+ 
+
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="http://localhost:1313/">
+      HectorZelaya.dev
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about/">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="http://localhost:1313/posts/first-kernel-patch/">
+              Writing My First Linux Kernel Patch: From User Space to Kernel with Kiro IDE
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2026-06-14T11:26:42-06:00">
+                June 14, 2026
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              14-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/hector-zelaya/">Hector Zelaya</a></div>
+
+          
+          
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <p>I&rsquo;ve used Linux daily for over a decade—drawn in by its customization, its reliability, and the open philosophy around the kernel and OS utilities that makes the whole thing tick. But despite my software engineering background, my relationship with it has always been from user space: web applications, cloud infrastructure, containers, configuration management. The kernel itself was this mythical layer I depended on but never touched.</p>
+<p>That changed because I wanted to play video games.</p>
+<p>This is the story of how a broken gamepad led me to write my first Linux kernel patch with the help of <a href="https://kiro.dev/"  class="external-link" target="_blank" rel="noopener">Kiro IDE</a>, how I navigated the mailing list etiquette, and what this deep dive into hardware taught me as a developer.</p>
+<h2 id="the-problem-a-broken-gamepad">
+  The Problem: A Broken Gamepad
+  <a class="heading-link" href="#the-problem-a-broken-gamepad">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>It all started with a HORI Wireless Switch Pad (vendor <code>0x0f0d</code>, product <code>0x00f6</code>) that my wife gave me a couple years ago. It&rsquo;s a great, officially licensed third-party Nintendo Switch controller which I wanted to repurpose for my PC games. So there I was, pairing it via Bluetooth to my NixOS machine, expecting it to just work, just to realize that things weren&rsquo;t going to be that simple.</p>
+<p>First, the buttons were completely scrambled. Pressing the Left Shoulder button (L) triggered <code>BTN_WEST</code> (the Y button) instead of <code>BTN_TL</code>. The triggers and minus buttons were all shifted. Games were unplayable.</p>
+<p>Next, the included LED lights that indicate both the established connection and the player number were spinning like Mario running after touching a flame on Mario 64.</p>
+<p>Digging into <code>dmesg</code> and evdev, I realized the problem: Linux was treating it as a generic Bluetooth controller using the <code>hid-generic</code> driver.</p>
+<p>First-party Switch controllers are handled by a dedicated kernel module called <code>hid-nintendo</code>, which maps the quirky Switch protocol into standard Linux gamepad inputs. Because my HORI pad had a third-party vendor ID, <code>hid-nintendo</code> completely ignored it.</p>
+<p>I had a choice: map the buttons in user space via a messy wrapper script, or fix the root cause in the kernel. I chose the kernel.</p>
+<h2 id="setting-up-the-environment-the-nixos-way">
+  Setting Up the Environment: The NixOS Way
+  <a class="heading-link" href="#setting-up-the-environment-the-nixos-way">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>On most Linux distros, kernel development starts with installing dev dependencies such as GCC, running <code>make menuconfig</code>, and eventually <code>make install</code> to drop a new kernel into your bootloader. NixOS doesn&rsquo;t work that way—the filesystem is read-only, there&rsquo;s no <code>/usr/src/linux</code>, and you can&rsquo;t just install packages imperatively.</p>
+<p>But NixOS gives you something better: Nix flakes. I created a <code>flake.nix</code> that declares the exact toolchain, libraries, and kernel headers I need. Running <code>nix develop</code> drops me into an isolated shell with everything pinned and reproducible:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-nix" data-lang="nix"><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">description</span> <span class="o">=</span> <span class="s2">&#34;Kernel module dev shell&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">inputs</span><span class="o">.</span><span class="n">nixpkgs</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="s2">&#34;github:NixOS/nixpkgs/nixos-unstable&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="n">outputs</span> <span class="o">=</span> <span class="p">{</span> <span class="n">self</span><span class="o">,</span> <span class="n">nixpkgs</span> <span class="p">}:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">devShells</span><span class="o">.</span><span class="n">x86_64-linux</span><span class="o">.</span><span class="n">default</span> <span class="o">=</span> <span class="k">let</span>
+</span></span><span class="line"><span class="cl">      <span class="n">pkgs</span> <span class="o">=</span> <span class="n">nixpkgs</span><span class="o">.</span><span class="n">legacyPackages</span><span class="o">.</span><span class="n">x86_64-linux</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">in</span> <span class="n">pkgs</span><span class="o">.</span><span class="n">mkShell</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="n">nativeBuildInputs</span> <span class="o">=</span> <span class="k">with</span> <span class="n">pkgs</span><span class="p">;</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">        <span class="n">gcc</span> <span class="n">gnumake</span> <span class="n">flex</span> <span class="n">bison</span> <span class="n">pahole</span> <span class="n">kmod</span>
+</span></span><span class="line"><span class="cl">        <span class="n">linuxPackages_latest</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">dev</span>
+</span></span><span class="line"><span class="cl">      <span class="p">];</span>
+</span></span><span class="line"><span class="cl">      <span class="n">shellHook</span> <span class="o">=</span> <span class="s1">&#39;&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s1">        export KDIR=</span><span class="si">${</span><span class="n">pkgs</span><span class="o">.</span><span class="n">linuxPackages_latest</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">dev</span><span class="si">}</span><span class="s1">/lib/modules/*/build
+</span></span></span><span class="line"><span class="cl"><span class="s1">      &#39;&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">};</span>
+</span></span><span class="line"><span class="cl">  <span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>No host contamination, no mismatched GCC versions, no &ldquo;works on my machine&rdquo;—just a clean, disposable environment ready for kernel hacking.</p>
+<p>The one NixOS-specific trick I needed was getting the kernel development headers for my <em>running</em> kernel. Unlike traditional distros where you <code>apt install linux-headers-$(uname -r)</code>, NixOS requires building (or fetching from cache) the <code>.dev</code> output of the kernel package:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Fetch the kernel dev headers matching your running kernel</span>
+</span></span><span class="line"><span class="cl">nix-build <span class="s1">&#39;&lt;nixpkgs&gt;&#39;</span> -A linuxPackages_latest.kernel.dev
+</span></span><span class="line"><span class="cl"><span class="c1"># Output: /nix/store/&lt;hash&gt;-linux-7.0.5-dev</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Export KDIR so the build system finds them</span>
+</span></span><span class="line"><span class="cl"><span class="nb">export</span> <span class="nv">KDIR</span><span class="o">=</span>/nix/store/&lt;hash&gt;-linux-7.0.5-dev/lib/modules/7.0.5/build
+</span></span></code></pre></div><p>This <code>KDIR</code> path provides the <code>.config</code>, <code>Module.symvers</code>, and all the headers that kbuild needs to compile out-of-tree modules with the correct vermagic—ensuring your compiled <code>.ko</code> file will actually load on the running kernel.</p>
+<h2 id="learning-by-doing-writing-a-standalone-driver">
+  Learning by Doing: Writing a Standalone Driver
+  <a class="heading-link" href="#learning-by-doing-writing-a-standalone-driver">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Before touching the massive, 3000-line <code>hid-nintendo</code> codebase, I wanted to understand how Linux HID drivers actually work. The best way to learn was to ask Kiro to write a tiny, standalone driver from scratch—<code>hid-hori</code>.</p>
+<h3 id="how-linux-drivers-work-the-30-second-version">
+  How Linux Drivers Work (The 30-Second Version)
+  <a class="heading-link" href="#how-linux-drivers-work-the-30-second-version">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>A Linux kernel module is essentially a struct full of function pointers that you register with a subsystem. For HID devices, you fill in a <code>struct hid_driver</code> with callbacks like <code>.probe</code> (called when your device connects), <code>.remove</code> (called when it disconnects), and <code>.input_mapping</code> (called when the kernel needs to know what a button means):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="k">struct</span> <span class="n">hid_driver</span> <span class="n">hori_driver</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">.</span><span class="n">name</span>           <span class="o">=</span> <span class="s">&#34;hori&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="p">.</span><span class="n">id_table</span>       <span class="o">=</span> <span class="n">hori_devices</span><span class="p">,</span>      <span class="cm">/* which hardware to claim */</span>
+</span></span><span class="line"><span class="cl">    <span class="p">.</span><span class="n">input_mapping</span>  <span class="o">=</span> <span class="n">hori_input_mapping</span><span class="p">,</span> <span class="cm">/* fix button codes */</span>
+</span></span><span class="line"><span class="cl">    <span class="p">.</span><span class="n">probe</span>          <span class="o">=</span> <span class="n">hori_probe</span><span class="p">,</span>         <span class="cm">/* initialize on connect */</span>
+</span></span><span class="line"><span class="cl">    <span class="p">.</span><span class="n">remove</span>         <span class="o">=</span> <span class="n">hori_remove</span><span class="p">,</span>        <span class="cm">/* clean up on disconnect */</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="nf">module_hid_driver</span><span class="p">(</span><span class="n">hori_driver</span><span class="p">);</span>
+</span></span></code></pre></div><p>You also provide a device table—a list of vendor/product IDs that tells the kernel &ldquo;wake me up when you see this hardware.&rdquo;</p>
+<p>When a matching device appears on the bus, the kernel calls your <code>probe</code> function. That&rsquo;s your chance to parse the device&rsquo;s report descriptor, start the HID transport, send initialization commands, and register input devices:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="nf">hori_probe</span><span class="p">(</span><span class="k">struct</span> <span class="n">hid_device</span> <span class="o">*</span><span class="n">hdev</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">hid_device_id</span> <span class="o">*</span><span class="n">id</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Allocate driver state — automatically freed on device removal */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ctlr</span> <span class="o">=</span> <span class="nf">devm_kzalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">ctlr</span><span class="p">),</span> <span class="n">GFP_KERNEL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Parse the HID report descriptor (buttons, axes, etc.) */</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">hid_parse</span><span class="p">(</span><span class="n">hdev</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Start the transport and create input devices */</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">hid_hw_start</span><span class="p">(</span><span class="n">hdev</span><span class="p">,</span> <span class="n">HID_CONNECT_DEFAULT</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Send the player LED command to the hardware */</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">hori_set_player_leds</span><span class="p">(</span><span class="n">hdev</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>From that point on, the kernel routes incoming HID reports through your callbacks, and you translate raw bytes into input events that userspace applications understand.</p>
+<p>The beauty of this model is that you can <code>insmod</code> your module into a running kernel and <code>rmmod</code> it out—no reboot required. The kernel handles the lifecycle, memory cleanup (via <code>devm_*</code> managed allocations), and device matching automatically.</p>
+<h3 id="claiming-the-device">
+  Claiming the Device
+  <a class="heading-link" href="#claiming-the-device">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>The first step was telling the kernel: &ldquo;If you see this specific hardware, let my code handle it instead of <code>hid-generic</code>.&rdquo;</p>
+<p>Every HID device on Linux is identified by its bus type, vendor ID, and product ID. The <code>hid_device_id</code> table is what the kernel uses to match hardware to drivers. When a Bluetooth device with vendor <code>0x0f0d</code> and product <code>0x00f6</code> appears, the kernel checks all loaded drivers&rsquo; tables and finds mine. The <code>MODULE_DEVICE_TABLE</code> macro exports this table so that <code>modprobe</code> can auto-load the module when the hardware is detected—no manual <code>insmod</code> needed after installation.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#define USB_VENDOR_ID_HORI                      0x0f0d
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define USB_DEVICE_ID_HORI_WIRELESS_SWITCH_PAD  0x00f6
+</span></span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">hid_device_id</span> <span class="n">hori_devices</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span> <span class="nf">HID_BLUETOOTH_DEVICE</span><span class="p">(</span><span class="n">USB_VENDOR_ID_HORI</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                           <span class="n">USB_DEVICE_ID_HORI_WIRELESS_SWITCH_PAD</span><span class="p">)</span> <span class="p">},</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span> <span class="p">}</span>  <span class="cm">/* sentinel — marks end of the list */</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="nf">MODULE_DEVICE_TABLE</span><span class="p">(</span><span class="n">hid</span><span class="p">,</span> <span class="n">hori_devices</span><span class="p">);</span>
+</span></span></code></pre></div><p>Because my driver has this device in its table, <code>hid-generic</code> automatically backs off—its internal <code>match</code> function checks whether any specialized driver wants the device before claiming it.</p>
+<h3 id="fixing-the-scrambled-buttons">
+  Fixing the Scrambled Buttons
+  <a class="heading-link" href="#fixing-the-scrambled-buttons">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>This was the core problem. The HID specification defines buttons as numbered usages: Button 1, Button 2, Button 3, and so on. When <code>hid-generic</code> handles a gamepad, it maps these sequentially to evdev codes starting at <code>BTN_GAMEPAD</code> (304). But the evdev gamepad codes aren&rsquo;t contiguous—there are gaps (306 and 309 are <code>BTN_C</code> and <code>BTN_Z</code>, rarely used). This means Button 5 on the HORI lands on <code>BTN_WEST</code> (308) instead of <code>BTN_TL</code> (310), and everything downstream is shifted.</p>
+<p>The fix: provide an explicit lookup table that maps each HID button usage to the correct evdev code, bypassing the default math entirely.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">hori_switch_pad_keymap</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">BTN_SOUTH</span><span class="p">,</span> <span class="n">BTN_EAST</span><span class="p">,</span> <span class="n">BTN_NORTH</span><span class="p">,</span> <span class="n">BTN_WEST</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">BTN_TL</span><span class="p">,</span> <span class="n">BTN_TR</span><span class="p">,</span> <span class="n">BTN_TL2</span><span class="p">,</span> <span class="n">BTN_TR2</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">BTN_SELECT</span><span class="p">,</span> <span class="n">BTN_START</span><span class="p">,</span> <span class="n">BTN_THUMBL</span><span class="p">,</span> <span class="n">BTN_THUMBR</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">BTN_MODE</span><span class="p">,</span> <span class="n">BTN_Z</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></div><p>The <code>input_mapping</code> callback is called by the HID core once per usage in the report descriptor. For each button, I extract the usage number, subtract 1 (HID usages are 1-based), and look up the correct code. Returning <code>1</code> tells the HID core &ldquo;I handled this—don&rsquo;t apply the default mapping.&rdquo;</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="nf">hori_input_mapping</span><span class="p">(</span><span class="k">struct</span> <span class="n">hid_device</span> <span class="o">*</span><span class="n">hdev</span><span class="p">,</span> <span class="k">struct</span> <span class="n">hid_input</span> <span class="o">*</span><span class="n">hi</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                              <span class="k">struct</span> <span class="n">hid_field</span> <span class="o">*</span><span class="n">field</span><span class="p">,</span> <span class="k">struct</span> <span class="n">hid_usage</span> <span class="o">*</span><span class="n">usage</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                              <span class="kt">unsigned</span> <span class="kt">long</span> <span class="o">**</span><span class="n">bit</span><span class="p">,</span> <span class="kt">int</span> <span class="o">*</span><span class="n">max</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="p">(</span><span class="n">usage</span><span class="o">-&gt;</span><span class="n">hid</span> <span class="o">&amp;</span> <span class="n">HID_USAGE</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">HORI_KEYMAP_SIZE</span><span class="p">)</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="cm">/* let HID core handle it */</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">hid_map_usage_clear</span><span class="p">(</span><span class="n">hi</span><span class="p">,</span> <span class="n">usage</span><span class="p">,</span> <span class="n">bit</span><span class="p">,</span> <span class="n">max</span><span class="p">,</span> <span class="n">EV_KEY</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">                        <span class="n">hori_switch_pad_keymap</span><span class="p">[</span><span class="n">index</span><span class="p">]);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span> <span class="cm">/* we handled this mapping */</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="setting-the-player-led">
+  Setting the Player LED
+  <a class="heading-link" href="#setting-the-player-led">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>The spinning LEDs were driving me crazy. After asking Kiro to research the Nintendo Switch controller protocol (thanks to the incredible <a href="https://github.com/dekuNukem/Nintendo_Switch_Reverse_Engineering"  class="external-link" target="_blank" rel="noopener">reverse engineering work</a> by the community), I learned the HORI responds to a subset of the Nintendo Switch subcommand protocol.</p>
+<p>The protocol works by sending HID output reports with a specific structure: a report type byte, a packet counter, 8 bytes of rumble data (zeros = silent), and then the subcommand ID followed by its payload. For setting player lights, the subcommand is <code>0x30</code> and the payload is a single byte bitmask where each bit corresponds to one of the four LEDs:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="nf">hori_set_player_leds</span><span class="p">(</span><span class="k">struct</span> <span class="n">hid_device</span> <span class="o">*</span><span class="n">hdev</span><span class="p">,</span> <span class="n">u8</span> <span class="n">leds</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">u8</span> <span class="n">buf</span><span class="p">[</span><span class="mi">12</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="mi">0</span> <span class="p">};</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buf</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="o">=</span> <span class="mh">0x01</span><span class="p">;</span>  <span class="cm">/* report type: rumble + subcommand */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buf</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>     <span class="cm">/* packet counter (not critical for one-shot) */</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* buf[2..9] = rumble data, all zeros */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buf</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0x30</span><span class="p">;</span>  <span class="cm">/* subcmd: set player lights */</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buf</span><span class="p">[</span><span class="mi">11</span><span class="p">]</span> <span class="o">=</span> <span class="n">leds</span><span class="p">;</span>  <span class="cm">/* bitmask: bit 0 = LED 1, bit 1 = LED 2, etc. */</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nf">hid_hw_output_report</span><span class="p">(</span><span class="n">hdev</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Passing <code>0x01</code> sets only the first LED (Player 1 pattern: <code>*---</code>). The moment this packet hit the controller, the spinning animation stopped and a single solid LED appeared. A small thing, but enormously satisfying—my first successful communication with hardware from kernel space.</p>
+<h3 id="testing-without-rebooting">
+  Testing Without Rebooting
+  <a class="heading-link" href="#testing-without-rebooting">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>One of the coolest things about Linux driver development is that you don&rsquo;t have to reboot to test. I compiled my module against the running kernel&rsquo;s headers and hot-swapped it:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Compile against the running kernel (from the hid-hori-build directory)</span>
+</span></span><span class="line"><span class="cl">make -C <span class="s2">&#34;</span><span class="nv">$KDIR</span><span class="s2">&#34;</span> <span class="nv">M</span><span class="o">=</span><span class="nv">$PWD</span> modules
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Load the module</span>
+</span></span><span class="line"><span class="cl">sudo insmod hid-hori.ko
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Connect the controller — hid-generic automatically backs off</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># because our driver has the device in its id_table</span>
+</span></span><span class="line"><span class="cl">bluetoothctl connect 30:31:7D:8D:45:BB
+</span></span><span class="line"><span class="cl">sudo evtest /dev/input/event25
+</span></span></code></pre></div><p>Pressing L now showed <code>BTN_TL (310)</code>. The LED stopped spinning and showed Player 1. It worked.</p>
+<h2 id="pivoting-to-the-real-patch">
+  Pivoting to the Real Patch
+  <a class="heading-link" href="#pivoting-to-the-real-patch">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>My standalone <code>hid-hori</code> driver worked flawlessly, but I quickly realized it was the wrong approach for upstreaming. The HORI controller speaks the same underlying Nintendo Switch protocol as the official Pro Controller—<code>hid-nintendo</code> already had 95% of the logic I needed (stick calibration, IMU support, battery reporting, rumble infrastructure).</p>
+<p>Instead of duplicating thousands of lines of protocol handling, I needed to teach <code>hid-nintendo</code> about my controller&rsquo;s quirks.</p>
+<h3 id="discovering-the-controllers-identity">
+  Discovering the Controller&rsquo;s Identity
+  <a class="heading-link" href="#discovering-the-controllers-identity">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>After adding the HORI&rsquo;s device ID to <code>hid-nintendo</code> and enabling dynamic debug, Kiro spotted the key line in <code>dmesg</code> logs:</p>
+<pre tabindex="0"><code>nintendo 0005:0F0D:00F6.000B: controller type = 0x06
+</code></pre><p>The HORI reports itself as controller type <code>0x06</code>, while first-party Pro Controllers report <code>0x03</code>. This single byte—returned by the device info subcommand during initialization—was the key to everything. The driver didn&rsquo;t recognize <code>0x06</code>, so it skipped all input configuration and produced an empty device.</p>
+<h3 id="the-changes-to-hid-nintendo">
+  The Changes to hid-nintendo
+  <a class="heading-link" href="#the-changes-to-hid-nintendo">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>With AI assistance from Kiro IDE, I identified and implemented the minimal set of changes:</p>
+<ol>
+<li>
+<p><strong>New controller type:</strong> Added <code>JOYCON_CTLR_TYPE_LIC_PRO = 0x06</code> to the enum and made <code>joycon_type_is_procon()</code> recognize it.</p>
+</li>
+<li>
+<p><strong>Default stick calibration:</strong> The HORI&rsquo;s SPI flash contains incompatible calibration data that causes severe stick drift. For <code>LIC_PRO</code> controllers, we skip the SPI read and use safe defaults.</p>
+</li>
+<li>
+<p><strong>Swapped X/Y buttons:</strong> The HORI has bits 0 and 1 swapped compared to Nintendo&rsquo;s layout. A dedicated <code>lic_procon_button_mappings</code> table fixes this.</p>
+</li>
+<li>
+<p><strong>Non-fatal timeouts:</strong> The HORI lacks rumble hardware and sometimes fails IMU initialization. These errors are logged but don&rsquo;t abort the probe.</p>
+</li>
+</ol>
+<p>In <code>drivers/hid/hid-ids.h</code>, I registered the device:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#define USB_VENDOR_ID_HORI                      0x0f0d
+</span></span></span><span class="line"><span class="cl"><span class="cp">#define USB_DEVICE_ID_HORI_WIRELESS_SWITCH_PAD  0x00f6
+</span></span></span></code></pre></div><p>In <code>drivers/hid/hid-nintendo.c</code>, the controller type enum gained a new entry:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">enum</span> <span class="n">joycon_ctlr_type</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">JOYCON_CTLR_TYPE_JCL</span>  <span class="o">=</span> <span class="mh">0x01</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">JOYCON_CTLR_TYPE_JCR</span>  <span class="o">=</span> <span class="mh">0x02</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">JOYCON_CTLR_TYPE_PRO</span>  <span class="o">=</span> <span class="mh">0x03</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">JOYCON_CTLR_TYPE_LIC_PRO</span> <span class="o">=</span> <span class="mh">0x06</span><span class="p">,</span> <span class="cm">/* Licensed third-party Pro Controllers */</span>
+</span></span><span class="line"><span class="cl">    <span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></div><p>The type check function now recognizes both:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kr">inline</span> <span class="kt">bool</span> <span class="nf">joycon_type_is_procon</span><span class="p">(</span><span class="k">struct</span> <span class="n">joycon_ctlr</span> <span class="o">*</span><span class="n">ctlr</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">ctlr</span><span class="o">-&gt;</span><span class="n">ctlr_type</span> <span class="o">==</span> <span class="n">JOYCON_CTLR_TYPE_PRO</span> <span class="o">||</span>
+</span></span><span class="line"><span class="cl">           <span class="n">ctlr</span><span class="o">-&gt;</span><span class="n">ctlr_type</span> <span class="o">==</span> <span class="n">JOYCON_CTLR_TYPE_LIC_PRO</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>A dedicated button mapping table handles the X/Y swap:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cm">/* Licensed Pro Controllers (e.g. HORI) swap X/Y bits in the report */</span>
+</span></span><span class="line"><span class="cl"><span class="k">static</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">joycon_ctlr_button_mapping</span> <span class="n">lic_procon_button_mappings</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span> <span class="n">BTN_EAST</span><span class="p">,</span>   <span class="n">JC_BTN_A</span><span class="p">,</span>     <span class="p">},</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span> <span class="n">BTN_SOUTH</span><span class="p">,</span>  <span class="n">JC_BTN_B</span><span class="p">,</span>     <span class="p">},</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span> <span class="n">BTN_NORTH</span><span class="p">,</span>  <span class="n">JC_BTN_Y</span><span class="p">,</span>     <span class="p">},</span> <span class="cm">/* swapped vs first-party */</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span> <span class="n">BTN_WEST</span><span class="p">,</span>   <span class="n">JC_BTN_X</span><span class="p">,</span>     <span class="p">},</span> <span class="cm">/* swapped vs first-party */</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span> <span class="n">BTN_TL</span><span class="p">,</span>     <span class="n">JC_BTN_L</span><span class="p">,</span>     <span class="p">},</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span> <span class="n">BTN_TR</span><span class="p">,</span>     <span class="n">JC_BTN_R</span><span class="p">,</span>     <span class="p">},</span>
+</span></span><span class="line"><span class="cl">    <span class="p">...</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span> <span class="cm">/* sentinel */</span> <span class="p">},</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></div><p>And the initialization path gracefully handles timeouts:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cm">/* Enable rumble */</span>
+</span></span><span class="line"><span class="cl"><span class="n">ret</span> <span class="o">=</span> <span class="nf">joycon_enable_rumble</span><span class="p">(</span><span class="n">ctlr</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">ctlr</span><span class="o">-&gt;</span><span class="n">ctlr_type</span> <span class="o">==</span> <span class="n">JOYCON_CTLR_TYPE_LIC_PRO</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">hid_dbg</span><span class="p">(</span><span class="n">hdev</span><span class="p">,</span> <span class="s">&#34;rumble enable failed, continuing</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="n">ret</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="cm">/* non-fatal: HORI has no vibration motor */</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">hid_err</span><span class="p">(</span><span class="n">hdev</span><span class="p">,</span> <span class="s">&#34;Failed to enable rumble; ret=%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">ret</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">goto</span> <span class="n">out_unlock</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="compiling-against-the-running-kernel">
+  Compiling Against the Running Kernel
+  <a class="heading-link" href="#compiling-against-the-running-kernel">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>However, there was one gotcha trying to compile <code>hid-nintendo</code> out of tree. As Boromir would say, one does not simply point kbuild at <code>drivers/hid/</code> and compile. Doing so, tried to build <em>every</em> <code>.c</code> file in that directory, including <code>hid-core.c</code> which had API differences between the source tree and my running kernel&rsquo;s headers.</p>
+<p>The solution: copy just the modified files into an isolated build directory with a minimal <code>Makefile</code>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mkdir -p build-hid-nintendo
+</span></span><span class="line"><span class="cl">cp drivers/hid/hid-nintendo.c build-hid-nintendo/
+</span></span><span class="line"><span class="cl">cp drivers/hid/hid-ids.h build-hid-nintendo/
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">cat &gt; build-hid-nintendo/Makefile <span class="s">&lt;&lt; &#39;EOF&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s">obj-m += hid-nintendo.o
+</span></span></span><span class="line"><span class="cl"><span class="s">ccflags-y += -I$(M)
+</span></span></span><span class="line"><span class="cl"><span class="s">EOF</span>
+</span></span></code></pre></div><p>The <code>ccflags-y += -I$(M)</code> tells the compiler to look in our directory first for <code>hid-ids.h</code> (with the HORI defines) before the kernel&rsquo;s copy. Then build against the running kernel&rsquo;s headers:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">make -C <span class="s2">&#34;</span><span class="nv">$KDIR</span><span class="s2">&#34;</span> <span class="nv">M</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/build-hid-nintendo modules
+</span></span></code></pre></div><p>Then, we remove the current <code>hid_nintendo</code> module, and load the patched one:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Load the dependency module and swap</span>
+</span></span><span class="line"><span class="cl">sudo modprobe -r hid_nintendo
+</span></span><span class="line"><span class="cl">sudo modprobe ff-memless
+</span></span><span class="line"><span class="cl">sudo insmod build-hid-nintendo/hid-nintendo.ko
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Reconnect and test</span>
+</span></span><span class="line"><span class="cl">bluetoothctl connect 30:31:7D:8D:45:BB
+</span></span><span class="line"><span class="cl">sudo dmesg <span class="p">|</span> grep nintendo
+</span></span></code></pre></div><h2 id="the-magic-of-nixos-deploying-permanently">
+  The Magic of NixOS: Deploying Permanently
+  <a class="heading-link" href="#the-magic-of-nixos-deploying-permanently">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Once the driver was stable, I didn&rsquo;t want to manually <code>insmod</code> after every reboot. NixOS made permanent deployment trivial:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-nix" data-lang="nix"><span class="line"><span class="cl"><span class="n">boot</span><span class="o">.</span><span class="n">kernelPatches</span> <span class="o">=</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">  <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">name</span> <span class="o">=</span> <span class="s2">&#34;hid-nintendo-hori-support&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">patch</span> <span class="o">=</span> <span class="sr">./patches/hori-support-v2.patch</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">];</span>
+</span></span></code></pre></div><p>One <code>nh os switch</code> later, NixOS automatically fetched the mainline kernel source, applied my patch, compiled the entire kernel in an isolated sandbox, and updated my bootloader. It took about 30 minutes, but once done, my daily driver had native gamepad support—with automatic rollback if anything went wrong.</p>
+<figure><img src="/images/hori-lara.jpg"
+    alt="Now I can play with my Hori pad"><figcaption>
+      <p>Now I can play with my Hori pad</p>
+    </figcaption>
+</figure>
+
+<h2 id="the-patch-submission-process">
+  The Patch Submission Process
+  <a class="heading-link" href="#the-patch-submission-process">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Paraphrasing Boromir once again, one does not simply <code>git push</code> into mainline Linux. The kernel doesn&rsquo;t use GitHub-like Pull Requests. It uses plain-text emails sent to specialized mailing lists.</p>
+<p>Kiro introduced me to <a href="https://b4.docs.kernel.org/en/latest/"  class="external-link" target="_blank" rel="noopener">b4</a>, a modern tool that manages the entire patch lifecycle—branch preparation, recipient discovery from the <code>MAINTAINERS</code> file, version tracking, and threading. The workflow looked like:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Create a b4-managed branch</span>
+</span></span><span class="line"><span class="cl">b4 prep -n hori-support -f <span class="k">for</span>-next
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Auto-discover who should receive the patch</span>
+</span></span><span class="line"><span class="cl">b4 prep --auto-to-cc
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Send (b4 handles threading, versioning, everything)</span>
+</span></span><span class="line"><span class="cl">b4 send --no-sign
+</span></span></code></pre></div><h2 id="code-review-and-upstreaming">
+  Code Review and Upstreaming
+  <a class="heading-link" href="#code-review-and-upstreaming">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Once the email was sent, automated CI systems like sashiko-bot picked up the patch, compiled it across dozens of architectures, and ran static analysis. It found a real bug: I wasn&rsquo;t clearing the error code after non-fatal timeouts, which could cause intermittent probe failures. A v2 fixed it.</p>
+<p>Then came the human review. I had submitted during <code>-rc5</code>—late in the cycle when maintainers focus on bug fixes, not new features. Kiro had warned me about this, but the kernel community was welcoming.</p>
+<p>After a bit of back-and-forth, the email I&rsquo;d been waiting for arrived:</p>
+<blockquote>
+<p>Applied, thanks.</p>
+</blockquote>
+<p>My code was accepted into the <a href="https://git.kernel.org/pub/scm/linux/kernel/git/hid/hid.git/commit/?h=for-7.2/nintendo&amp;id=9146038120a6e5b2ba872515ed2097e4c285602d"  class="external-link" target="_blank" rel="noopener">HID subsystem tree on the <code>for-7.2/nintendo</code> branch</a>, queued to ship in Linux 7.2.</p>
+<h2 id="lessons-learned">
+  Lessons Learned
+  <a class="heading-link" href="#lessons-learned">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p><strong>The Kernel is Just Code:</strong> It&rsquo;s intimidating, but at the end of the day, it&rsquo;s just logic. If you can trace a bug in a complex web app, you can trace a button mapping issue in a C struct.</p>
+<p><strong>Start Small, Then Integrate:</strong> Writing a standalone 150-line driver taught me HID fundamentals without the complexity of <code>hid-nintendo</code>. Once I understood the protocol, integrating into the real driver was straightforward.</p>
+<p><strong>AI is a Collaborator, Not an Author:</strong> Kiro IDE didn&rsquo;t fix my controller—I drove every decision, from the initial approach to the final submission. What Kiro really did was automate my research: surfacing kernel documentation, explaining unfamiliar macros like <code>DEFINE_IDA</code> and <code>devm_kzalloc</code>, generating code drafts that I validated against real hardware, and guiding me through the <code>checkpatch.pl</code> and <code>b4</code> workflows. It got things wrong too—assumptions about Bluetooth hostnames, overcomplicated fallback paths—and I caught those through testing. In the end, the AI <strong>accelerated my understanding at each step, but the engineering judgment was mine</strong>.</p>
+<p><strong>NixOS is a Superpower for Kernel Work:</strong> A single <code>flake.nix</code> gave me a reproducible, isolated dev environment with the exact toolchain and headers I needed. Once the patch was ready, <code>boot.kernelPatches</code> let me deploy it declaratively—version-controlled, reviewable, and trivially removable. And if the patched kernel ever broke something, I could select the previous generation at boot and be back to a working system in seconds.</p>
+<p><strong>Hardware bugs teach you more than software bugs:</strong> Tracing a misbehaving controller through the Bluetooth stack, HID subsystem, and input layer gave me a deeper understanding of Linux than years of userspace development ever did.</p>
+<p>Having the capability and the confidence to drop down into the OS kernel means I no longer have to wait for someone else to fix my hardware problems. I can fix them myself, from the bare metal all the way up.</p>
+<p>Even if it starts with just trying to play a video game.</p>
+
+      </div>
+
+
+      <footer>
+        
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2015 -
+    
+    2026
+     Hector Zelaya 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.js"></script>
+  
+
+  
+
+  
+
+
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-DM273NM2FB"></script>
+      <script>
+        var doNotTrack = false;
+        if ( true ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-DM273NM2FB');
+        }
+      </script>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+
+</html>
