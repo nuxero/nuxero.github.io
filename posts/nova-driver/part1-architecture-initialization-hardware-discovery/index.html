@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>
+  Nova: A NVIDIA Driver Written in Rust for the Linux Kernel - Part 1 · HectorZelaya.dev
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Hector Zelaya">
+<meta name="description" content="An overview on the basics of the new Rust GPU Driver Nova">
+<meta name="keywords" content="blog,webrtc,developer advocate,aws,nixos,linux,real-time communications">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Nova: A NVIDIA Driver Written in Rust for the Linux Kernel - Part 1">
+  <meta name="twitter:description" content="An overview on the basics of the new Rust GPU Driver Nova">
+
+<meta property="og:url" content="https://www.hectorzelaya.dev/posts/nova-driver/part1-architecture-initialization-hardware-discovery/">
+  <meta property="og:site_name" content="HectorZelaya.dev">
+  <meta property="og:title" content="Nova: A NVIDIA Driver Written in Rust for the Linux Kernel - Part 1">
+  <meta property="og:description" content="An overview on the basics of the new Rust GPU Driver Nova">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-06-27T13:56:42-06:00">
+    <meta property="article:modified_time" content="2026-06-27T13:56:42-06:00">
+
+
+
+
+<link rel="canonical" href="https://www.hectorzelaya.dev/posts/nova-driver/part1-architecture-initialization-hardware-discovery/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.min.f8ac2fdd0cb7e56145845d949b5c036d40cd5061c013fd446f2f54a63ade62e8.css" integrity="sha256-&#43;Kwv3Qy35WFFhF2Um1wDbUDNUGHAE/1Eby9UpjreYug=" crossorigin="anonymous" media="screen" />
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.min.ad48f476275974885bdc03d5251e3cdbe1678c54a63ff772376b0ed2adc468dd.css" integrity="sha256-rUj0didZdIhb3APVJR482&#43;FnjFSmP/dyN2sO0q3EaN0=" crossorigin="anonymous" media="screen" />
+  
+
+
+
+ 
+
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="https://www.hectorzelaya.dev/">
+      HectorZelaya.dev
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about/">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/music/">Music</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="https://www.hectorzelaya.dev/posts/nova-driver/part1-architecture-initialization-hardware-discovery/">
+              Nova: A NVIDIA Driver Written in Rust for the Linux Kernel - Part 1
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2026-06-27T13:56:42-06:00">
+                June 27, 2026
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              21-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/hector-zelaya/">Hector Zelaya</a></div>
+
+          
+          
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <h2 id="part-1-architecture-initialization--hardware-discovery">
+  Part 1: Architecture, Initialization &amp; Hardware Discovery
+  <a class="heading-link" href="#part-1-architecture-initialization--hardware-discovery">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<hr>
+<p><em>This is Part 1 of a three-part series exploring <a href="https://rust-for-linux.com/nova-gpu-driver"  class="external-link" target="_blank" rel="noopener">Nova</a>, a new open-source GPU driver written in Rust for NVIDIA GPUs in the Linux kernel. This post covers the two-driver architecture, PCI initialization, BAR0 mapping, GPU identification, and safe register access.</em></p>
+<p><em>Note: Nova is under active development. The code shown here reflects the upstream state as of writing, but APIs are evolving — some features described are work-in-progress. For the current state, check the <a href="https://lore.kernel.org/nova-gpu/"  class="external-link" target="_blank" rel="noopener">nova-gpu mailing list</a> and the <a href="https://github.com/NVIDIA/nova"  class="external-link" target="_blank" rel="noopener">NVIDIA/nova</a> development branch.</em></p>
+<p><em>Prerequisites: This post assumes basic familiarity with systems programming concepts (memory addresses, pointers, hardware registers). Rust experience helps but isn&rsquo;t required — patterns are explained as they appear. Kernel-specific concepts (MMIO, DMA, PCI) are introduced when first used.</em></p>
+<hr>
+<h3 id="how-to-read-this-series">
+  How to read this series
+  <a class="heading-link" href="#how-to-read-this-series">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>This series explains Nova&rsquo;s <strong>design patterns and the reasoning behind them</strong>. Code snippets illustrate architectural decisions — they&rsquo;re snapshots of a moving target, but the patterns they demonstrate are durable. When an API is actively being reworked, I&rsquo;ll (try to) note it. For current implementation details, the source of truth is <code>drivers/gpu/nova-core/</code> and <code>drivers/gpu/drm/nova/</code> in the kernel tree (or the <a href="https://github.com/NVIDIA/nova"  class="external-link" target="_blank" rel="noopener">NVIDIA/nova</a> development branch).</p>
+<p>The goal is to give you enough understanding of how the pieces fit together to start reading patches, following mailing list discussions, and eventually contributing.</p>
+<h2 id="what-is-nova">
+  What is Nova?
+  <a class="heading-link" href="#what-is-nova">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Nova is a from-scratch GPU driver for NVIDIA GPUs (Turing and later) being developed directly in the upstream Linux kernel. Unlike traditional GPU drivers written in C, Nova is written in Rust and targets exclusively GPUs that use NVIDIA&rsquo;s GPU System Processor (GSP) firmware model — RTX 20 series onward.</p>
+<p>The project is developed in the open on the <a href="mailto:nova-gpu@vger.kernel.org" >nova-gpu@vger.kernel.org</a> mailing list. It landed in Linux 6.15 as an initial stub and has been rapidly growing functionality since then.</p>
+<p>Nova&rsquo;s key thesis: a GPU driver is essentially a resource management problem — managing lifetimes of PCI mappings, DMA buffers, firmware objects, and user-space handles. Rust&rsquo;s ownership system (a set of compile-time rules that track which code &ldquo;owns&rdquo; each resource and is responsible for releasing it) confines lifetime-related bugs (use-after-free, double-free, forgotten cleanup) to clearly-marked <code>unsafe</code> boundaries, making them structurally impossible in the vast majority of driver code — the part that grows and changes — rather than merely detectable at runtime through testing or code review.</p>
+<h2 id="why-not-just-improve-nouveau">
+  Why Not Just Improve Nouveau?
+  <a class="heading-link" href="#why-not-just-improve-nouveau">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Nouveau is the existing open-source NVIDIA driver in Linux, and it deserves recognition for what it accomplished. Over nearly two decades of community-driven reverse engineering, Nouveau delivered open-source support across a remarkable range of NVIDIA hardware — from NV04 through modern GPUs — without any official vendor cooperation for most of its history. It enabled Linux users to run NVIDIA hardware with a fully free driver stack long before NVIDIA began opening up.</p>
+<p>However, the GPU landscape has fundamentally changed. Starting with Turing (RTX 20 series), NVIDIA introduced the GSP firmware model: a microcontroller on the GPU itself handles most of the hardware management, and the kernel driver&rsquo;s role shifts from direct register programming to communicating with this firmware. This represents a fundamentally different driver architecture — one that Nouveau has been adapting to, but which creates an opportunity to rethink the design from scratch.</p>
+<p>Nova takes that opportunity. Rather than retrofitting a new architecture onto an existing C codebase, it starts fresh with Rust and a design built around the GSP model from day one.</p>
+<p><strong>Nova is intended as the successor to Nouveau for all GSP-based GPUs</strong>. However, Nouveau continues to serve the vast catalog of pre-Turing hardware — NV04 through Volta — that Nova will never support. The two drivers coexist in the kernel because they target different hardware generations: Nova supersedes Nouveau for GSP-era GPUs, while Nouveau continues supporting older hardware.</p>
+<table>
+  <thead>
+      <tr>
+          <th></th>
+          <th><strong>Nouveau</strong></th>
+          <th><strong>Nova</strong></th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Language</td>
+          <td>C</td>
+          <td>Rust</td>
+      </tr>
+      <tr>
+          <td>Architecture</td>
+          <td>Single monolithic module</td>
+          <td>Two cooperating modules</td>
+      </tr>
+      <tr>
+          <td>GPU support</td>
+          <td>NV04 through current (broad)</td>
+          <td>Turing+ only (GSP-based)</td>
+      </tr>
+      <tr>
+          <td>Resource lifetimes</td>
+          <td>Manual, convention-based</td>
+          <td>Compiler-enforced</td>
+      </tr>
+      <tr>
+          <td>Firmware model</td>
+          <td>Mixed (custom + GSP)</td>
+          <td>GSP-only</td>
+      </tr>
+      <tr>
+          <td>Development history</td>
+          <td>~20 years of community effort</td>
+          <td>Started 2024, upstream 2025</td>
+      </tr>
+  </tbody>
+</table>
+<figure><img src="/images/nova/nova-architecture.png"
+    alt="nova vs nouveau architecture"><figcaption>
+      <p>nova vs nouveau architecture</p>
+    </figcaption>
+</figure>
+
+<h2 id="the-two-driver-architecture">
+  The Two-Driver Architecture
+  <a class="heading-link" href="#the-two-driver-architecture">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Nova is split into two kernel modules with a clear boundary between them:</p>
+<ul>
+<li><strong>nova-core</strong> (<code>drivers/gpu/nova-core/</code>): The PCI driver that owns the GPU hardware. It manages operations related with the physical GPU device such as BAR0 register access, falcon microcontrollers, GSP firmware boot, and framebuffer layout. It also serves as the common base for both nova-drm and a future vGPU manager VFIO driver.</li>
+<li><strong>nova-drm</strong> (<code>drivers/gpu/drm/nova/</code>): An auxiliary DRM driver (DRM — Direct Rendering Manager — is the Linux kernel&rsquo;s subsystem for managing GPUs and displays) that exposes the user-space API — IOCTLs (system calls through which applications request services from the driver), GEM buffer objects, and (eventually) command submission.</li>
+</ul>
+<h3 id="why-split">
+  Why Split?
+  <a class="heading-link" href="#why-split">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<ol>
+<li>
+<p><strong>Separation of concerns.</strong> Hardware lifecycle management (power sequencing, firmware, register programming) is fundamentally different from user-space API design (IOCTLs, memory management, scheduling).</p>
+</li>
+<li>
+<p><strong>Rebindability.</strong> nova-drm can be unbound and rebound without resetting the GPU. This is useful for driver updates, debugging, and vGPU scenarios.</p>
+</li>
+<li>
+<p><strong>Multiple consumers.</strong> nova-core is designed to also serve as the backend for a vGPU manager (VFIO driver), not just nova-drm.</p>
+</li>
+<li>
+<p><strong>Independent development velocity.</strong> Teams can iterate on the user-space API without touching hardware abstraction code and vice versa.</p>
+</li>
+</ol>
+<h3 id="the-auxiliary-bus-bridge">
+  The Auxiliary Bus Bridge
+  <a class="heading-link" href="#the-auxiliary-bus-bridge">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>The two modules communicate through the kernel&rsquo;s <a href="https://docs.kernel.org/driver-api/auxiliary_bus.html"  class="external-link" target="_blank" rel="noopener">auxiliary bus</a>. The auxiliary bus is a kernel mechanism that lets a parent driver create virtual &ldquo;sub-devices&rdquo; that other drivers can bind to — without those child drivers needing to know about the physical bus (PCI, platform, etc.) underneath.</p>
+<p>The flow:</p>
+<ol>
+<li>nova-core registers an auxiliary device named <code>&quot;nova-drm&quot;</code> during its PCI probe - this is when the driver is initializing the physical device.</li>
+<li>nova-drm declares a device table matching <code>(&quot;nova-core&quot;, &quot;nova-drm&quot;)</code>.</li>
+<li>The kernel&rsquo;s bus infrastructure automatically probes nova-drm when nova-core creates the device.</li>
+<li>The bus guarantees ordering: nova-drm is always unbound <em>before</em> nova-core. The parent outlives the child.</li>
+</ol>
+<p>From <code>drivers/gpu/nova-core/driver.rs</code> — nova-core creates the auxiliary device:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="cp">#[pin_data]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="k">struct</span> <span class="nc">NovaCore</span><span class="o">&lt;</span><span class="na">&#39;bound</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="cp">#[pin]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="n">gpu</span>: <span class="nc">Gpu</span><span class="o">&lt;</span><span class="na">&#39;bound</span><span class="o">&gt;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">bar</span>: <span class="nc">pci</span>::<span class="n">Bar</span><span class="o">&lt;</span><span class="na">&#39;bound</span><span class="p">,</span><span class="w"> </span><span class="no">BAR0_SIZE</span><span class="o">&gt;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Creates a &#34;nova-drm&#34; auxiliary device on the bus.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// When this Registration is dropped (nova-core unbinds), the auxiliary
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// device is removed, forcing nova-drm to unbind first.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="cp">#[allow(clippy::type_complexity)]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">_reg</span>: <span class="nc">auxiliary</span>::<span class="n">Registration</span><span class="o">&lt;</span><span class="na">&#39;bound</span><span class="p">,</span><span class="w"> </span><span class="fm">ForLt!</span><span class="p">(())</span><span class="o">&gt;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>From <code>drivers/gpu/drm/nova/driver.rs</code> — nova-drm declares what it binds to:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// Static device table: &#34;I bind to auxiliary devices named &#39;nova-drm&#39;
+</span></span></span><span class="line"><span class="cl"><span class="c1">// created by the module &#39;nova-core&#39;.&#34;
+</span></span></span><span class="line"><span class="cl"><span class="n">kernel</span>::<span class="fm">auxiliary_device_table!</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">AUX_TABLE</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">MODULE_AUX_TABLE</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="o">&lt;</span><span class="n">NovaDriver</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">auxiliary</span>::<span class="n">Driver</span><span class="o">&gt;</span>::<span class="n">IdInfo</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">[(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">auxiliary</span>::<span class="n">DeviceId</span>::<span class="n">new</span><span class="p">(</span><span class="no">NOVA_CORE_MODULE_NAME</span><span class="p">,</span><span class="w"> </span><span class="no">AUXILIARY_NAME</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">()</span><span class="w">  </span><span class="c1">// No per-match metadata needed.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">)]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>Where <code>NOVA_CORE_MODULE_NAME = c&quot;nova-core&quot;</code> and <code>AUXILIARY_NAME = c&quot;nova-drm&quot;</code>.</p>
+<p>When the kernel sees nova-core create an auxiliary device whose name matches nova-drm&rsquo;s table, it calls nova-drm&rsquo;s <code>probe()</code>, passing a reference to the auxiliary device. At that point, the two modules are connected.</p>
+<figure><img src="/images/nova/initialization-sequence.png"
+    alt="Nova&rsquo;s initialization sequence"><figcaption>
+      <p>Nova&rsquo;s initialization sequence</p>
+    </figcaption>
+</figure>
+
+<h2 id="nova-core-pci-probe-and-bar0-mapping">
+  Nova-Core: PCI Probe and BAR0 Mapping
+  <a class="heading-link" href="#nova-core-pci-probe-and-bar0-mapping">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<h3 id="the-probe-flow">
+  The Probe Flow
+  <a class="heading-link" href="#the-probe-flow">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>When the kernel finds an NVIDIA GPU on the PCI bus, nova-core&rsquo;s probe function runs. The PCI device table tells the kernel which hardware this driver handles — in this case, any NVIDIA device classified as a VGA or 3D controller:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// &#34;Match any NVIDIA GPU that&#39;s either a VGA controller or a 3D controller.&#34;
+</span></span></span><span class="line"><span class="cl"><span class="c1">// This is broad — the driver will reject unsupported chipsets later during
+</span></span></span><span class="line"><span class="cl"><span class="c1">// GPU identification (Spec::new), returning ENODEV for pre-Turing GPUs.
+</span></span></span><span class="line"><span class="cl"><span class="n">kernel</span>::<span class="fm">pci_device_table!</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">PCI_TABLE</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">MODULE_PCI_TABLE</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="o">&lt;</span><span class="n">NovaCoreDriver</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">pci</span>::<span class="n">Driver</span><span class="o">&gt;</span>::<span class="n">IdInfo</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">[</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">(</span><span class="n">pci</span>::<span class="n">DeviceId</span>::<span class="n">from_class_and_vendor</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">Class</span>::<span class="no">DISPLAY_VGA</span><span class="p">,</span><span class="w"> </span><span class="n">ClassMask</span>::<span class="n">ClassSubclass</span><span class="p">,</span><span class="w"> </span><span class="n">Vendor</span>::<span class="no">NVIDIA</span><span class="p">),</span><span class="w"> </span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">(</span><span class="n">pci</span>::<span class="n">DeviceId</span>::<span class="n">from_class_and_vendor</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">Class</span>::<span class="no">DISPLAY_3D</span><span class="p">,</span><span class="w"> </span><span class="n">ClassMask</span>::<span class="n">ClassSubclass</span><span class="p">,</span><span class="w"> </span><span class="n">Vendor</span>::<span class="no">NVIDIA</span><span class="p">),</span><span class="w"> </span><span class="p">()),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">]</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>The probe function itself is remarkably compact thanks to Rust&rsquo;s <code>try_pin_init!</code> macro, which initializes all fields in declaration order while maintaining pinning guarantees.</p>
+<p>A brief explanation of why this matters: kernel objects often can&rsquo;t be moved in memory after creation — other subsystems hold raw pointers to them (linked lists, wait queues, PCI bookkeeping). Normal Rust would construct a struct in one place in memory and then move it to its final location, which would invalidate those pointers.</p>
+<p><code>try_pin_init!</code> solves this by initializing each field <em>directly at its final pinned address</em>. Additionally, if initialization fails at any point, previously-initialized fields are automatically dropped in reverse order — no explicit <code>goto cleanup</code> chains:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="n">pci</span>::<span class="n">Driver</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">NovaCoreDriver</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">type</span> <span class="nc">IdInfo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">();</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// The driver&#39;s per-device state. `&#39;bound` ties it to the PCI binding lifetime.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">type</span> <span class="nc">Data</span><span class="o">&lt;</span><span class="na">&#39;bound</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NovaCore</span><span class="o">&lt;</span><span class="na">&#39;bound</span><span class="o">&gt;</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="no">ID_TABLE</span>: <span class="nc">pci</span>::<span class="n">IdTable</span><span class="o">&lt;</span><span class="bp">Self</span>::<span class="n">IdInfo</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="no">PCI_TABLE</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">fn</span> <span class="nf">probe</span><span class="o">&lt;</span><span class="na">&#39;bound</span><span class="o">&gt;</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">pdev</span>: <span class="kp">&amp;</span><span class="na">&#39;bound</span> <span class="nc">pci</span>::<span class="n">Device</span><span class="o">&lt;</span><span class="n">Core</span><span class="o">&lt;</span><span class="nb">&#39;_</span><span class="o">&gt;&gt;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">_info</span>: <span class="kp">&amp;</span><span class="na">&#39;bound</span> <span class="nc">Self</span>::<span class="n">IdInfo</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">impl</span><span class="w"> </span><span class="n">PinInit</span><span class="o">&lt;</span><span class="bp">Self</span>::<span class="n">Data</span><span class="o">&lt;</span><span class="na">&#39;bound</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="na">&#39;bound</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// Returns a PinInit — a &#34;recipe&#34; for initializing NovaCore in-place
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// at its final pinned address. The kernel calls this recipe after
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// allocating the memory.
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">pin_init</span>::<span class="n">pin_init_scope</span><span class="p">(</span><span class="k">move</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">pdev</span><span class="p">.</span><span class="n">enable_device_mem</span><span class="p">()</span><span class="o">?</span><span class="p">;</span><span class="w">  </span><span class="c1">// Enable PCI memory BARs
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="c1">// (The `?` operator: if this call fails, return the error immediately
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="c1">// to the caller. It&#39;s Rust&#39;s concise error propagation syntax.)
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">pdev</span><span class="p">.</span><span class="n">set_master</span><span class="p">();</span><span class="w">          </span><span class="c1">// Enable bus mastering (needed for DMA)
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nb">Ok</span><span class="p">(</span><span class="fm">try_pin_init!</span><span class="p">(</span><span class="n">NovaCore</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="c1">// Map BAR0 (16 MB MMIO region). Compile-time size check.
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="n">bar</span>: <span class="nc">pdev</span><span class="p">.</span><span class="n">iomap_region_sized</span>::<span class="o">&lt;</span><span class="no">BAR0_SIZE</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="s">&#34;nova-core/bar0&#34;</span><span class="p">)</span><span class="o">?</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="c1">// Initialize the GPU. `&lt;-` means &#34;pinned sub-initializer&#34; —
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="c1">// Gpu is constructed in-place at its final address.
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="n">gpu</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="n">Gpu</span>::<span class="n">new</span><span class="p">(</span><span class="n">pdev</span><span class="p">,</span><span class="w"> </span><span class="k">unsafe</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">&amp;*</span><span class="n">core</span>::<span class="n">ptr</span>::<span class="n">from_ref</span><span class="p">(</span><span class="n">bar</span><span class="p">)</span><span class="w"> </span><span class="p">}),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="c1">// Register the auxiliary device that triggers nova-drm&#39;s probe.
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="n">_reg</span>: <span class="nc">auxiliary</span>::<span class="n">Registration</span>::<span class="n">new</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="n">pdev</span><span class="p">.</span><span class="n">as_ref</span><span class="p">(),</span><span class="w"> </span><span class="n">c</span><span class="s">&#34;nova-drm&#34;</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="no">AUXILIARY_ID_COUNTER</span><span class="p">.</span><span class="n">fetch_add</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">Relaxed</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="k">crate</span>::<span class="no">MODULE_NAME</span><span class="p">,</span><span class="w"> </span><span class="p">(),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="p">)</span><span class="o">?</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">}))</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">})</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The initialization sequence:</p>
+<ol>
+<li><strong><code>enable_device_mem()</code></strong> — Enables PCI memory BARs so we can map them.</li>
+<li><strong><code>set_master()</code></strong> — Enables bus mastering for DMA transfers (DMA — Direct Memory Access — allows the GPU to read/write system RAM independently without the CPU moving every byte).</li>
+<li><strong><code>iomap_region_sized::&lt;SZ_16M&gt;(0)</code></strong> — Maps BAR0 (16 MB) into kernel virtual address space.</li>
+<li><strong><code>Gpu::new()</code></strong> — Runs the full GPU initialization sequence.</li>
+<li><strong><code>auxiliary::Registration::new()</code></strong> — Creates the auxiliary device that triggers nova-drm&rsquo;s probe.</li>
+</ol>
+<h3 id="typed-bar0-mmio-with-compile-time-safety">
+  Typed BAR0: MMIO with Compile-Time Safety
+  <a class="heading-link" href="#typed-bar0-mmio-with-compile-time-safety">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>BAR0 is the 16 MB memory-mapped I/O region through which the CPU accesses GPU registers. In a traditional C driver, you&rsquo;d use <code>ioremap()</code> and raw pointer arithmetic. In Nova, BAR0 is a typed, lifetime-bound reference:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">const</span><span class="w"> </span><span class="no">BAR0_SIZE</span>: <span class="kt">usize</span> <span class="o">=</span><span class="w"> </span><span class="no">SZ_16M</span><span class="p">;</span><span class="w">  </span><span class="c1">// 16 MB — fixed for all supported GPUs.
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Bar0 is just a reference to a sized, lifetime-bound MMIO mapping.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Three invariants are encoded in this one type alias.
+</span></span></span><span class="line"><span class="cl"><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="k">type</span> <span class="nc">Bar0</span><span class="o">&lt;</span><span class="na">&#39;a</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="na">&#39;a</span><span class="w"> </span><span class="n">pci</span>::<span class="n">Bar</span><span class="o">&lt;</span><span class="na">&#39;a</span><span class="p">,</span><span class="w"> </span><span class="no">BAR0_SIZE</span><span class="o">&gt;</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>This one type alias encodes three critical invariants:</p>
+<ul>
+<li><strong>Lifetime <code>'a</code></strong>: The BAR0 reference cannot outlive the PCI device binding. Once the driver unbinds, all references to BAR0 are statically invalidated.</li>
+<li><strong>Const generic <code>BAR0_SIZE</code></strong>: The size is baked into the type at compile time, enabling bounds checking on register offsets without runtime overhead.</li>
+<li><strong><code>pci::Bar</code> wrapper</strong>: Uses the kernel crate&rsquo;s <code>Io</code> trait for MMIO reads/writes rather than raw pointer derefs.</li>
+</ul>
+<p>Reading a register is a single method call that combines offset resolution, bounds checking, a volatile MMIO read (one the compiler can&rsquo;t optimize away — necessary because hardware registers can change value between reads), and typed bitfield construction:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// Returns an NV_PMC_BOOT_0 struct — a typed bitfield wrapper around the raw u32.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// The register&#39;s offset (0x0) is const — out-of-bounds offsets won&#39;t compile.
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">boot0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">regs</span>::<span class="no">NV_PMC_BOOT_0</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><h3 id="what-is-mmio">
+  What is MMIO?
+  <a class="heading-link" href="#what-is-mmio">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>For readers unfamiliar with GPU driver internals: Memory-Mapped I/O is how the CPU talks to GPU hardware. The GPU exposes a window of &ldquo;registers&rdquo; (really just fixed-address control/status locations) through PCIe Base Address Register 0.</p>
+<p>For instance, when the OS maps BAR0 into kernel virtual address space, reading offset 0x0 returns the GPU&rsquo;s boot identification register, reading offset 0xa00 returns extended chipset info, and so on for thousands of control registers across the 16 MB window.</p>
+<p>Every GPU operation — identification, firmware loading, falcon microcontroller control — ultimately comes down to reading and writing specific offsets within this 16 MB window.</p>
+<h2 id="gpu-identification">
+  GPU Identification
+  <a class="heading-link" href="#gpu-identification">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Once BAR0 is mapped, the first thing Nova does is figure out which GPU it&rsquo;s talking to.</p>
+<h3 id="boot-registers">
+  Boot Registers
+  <a class="heading-link" href="#boot-registers">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>NVIDIA GPUs expose two identification registers:</p>
+<ul>
+<li><strong><code>NV_PMC_BOOT_0</code></strong> at offset <code>0x0</code> — A legacy register present on all NVIDIA GPUs since NV04. Used to filter out pre-Fermi GPUs that Nova doesn&rsquo;t support.</li>
+<li><strong><code>NV_PMC_BOOT_42</code></strong> at offset <code>0xa00</code> — An extended register (available since Fermi) containing the architecture and implementation fields needed to precisely identify the GPU.</li>
+</ul>
+<p>From <code>regs.rs</code> — the <code>register!</code> macro declares each register&rsquo;s MMIO offset and its bit-level structure. Reading the register returns a typed struct with accessor methods for each field:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="fm">register!</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Basic revision information about the GPU.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Offset 0x0 — present on all NVIDIA GPUs since NV04.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="no">NV_PMC_BOOT_0</span><span class="p">(</span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="o">@</span><span class="w"> </span><span class="mh">0x00000000</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// Each line: `hi:lo field_name` — defines a bit range and its accessor.
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">28</span>:<span class="mi">24</span><span class="w">   </span><span class="n">architecture_0</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">23</span>:<span class="mi">20</span><span class="w">   </span><span class="n">implementation</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">8</span>:<span class="mi">8</span><span class="w">     </span><span class="n">architecture_1</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">7</span>:<span class="mi">4</span><span class="w">     </span><span class="n">major_revision</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">3</span>:<span class="mi">0</span><span class="w">     </span><span class="n">minor_revision</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Extended architecture information.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Offset 0xa00 — available since Fermi, the authoritative ID register.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="no">NV_PMC_BOOT_42</span><span class="p">(</span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="o">@</span><span class="w"> </span><span class="mh">0x00000a00</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// `?=&gt; Architecture` means: cast bits to u32, then TryFrom into the
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// Architecture enum. Returns Result — Rust&#39;s &#34;either success or error&#34;
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// type (fallible — unknown values possible).
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">29</span>:<span class="mi">24</span><span class="w">   </span><span class="n">architecture</span><span class="w"> </span><span class="o">?=&gt;</span><span class="w"> </span><span class="n">Architecture</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">23</span>:<span class="mi">20</span><span class="w">   </span><span class="n">implementation</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">19</span>:<span class="mi">16</span><span class="w">   </span><span class="n">major_revision</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">15</span>:<span class="mi">12</span><span class="w">   </span><span class="n">minor_revision</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><h3 id="the-identification-algorithm">
+  The Identification Algorithm
+  <a class="heading-link" href="#the-identification-algorithm">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>The <code>Spec::new()</code> function implements the two-stage identification:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">fn</span> <span class="nf">new</span><span class="p">(</span><span class="n">dev</span>: <span class="kp">&amp;</span><span class="nc">device</span>::<span class="n">Device</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span>: <span class="nc">Bar0</span><span class="o">&lt;</span><span class="nb">&#39;_</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="n">Spec</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">boot0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">regs</span>::<span class="no">NV_PMC_BOOT_0</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Stage 1: Reject pre-Fermi GPUs (they don&#39;t have reliable boot42).
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="n">boot0</span><span class="p">.</span><span class="n">is_older_than_fermi</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">Err</span><span class="p">(</span><span class="no">ENODEV</span><span class="p">);</span><span class="w">  </span><span class="c1">// ENODEV = &#34;no such device&#34; — a kernel error code
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Stage 2: Use boot42 for precise identification.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="n">boot42</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">regs</span>::<span class="no">NV_PMC_BOOT_42</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">Spec</span>::<span class="n">try_from</span><span class="p">(</span><span class="n">boot42</span><span class="p">).</span><span class="n">inspect_err</span><span class="p">(</span><span class="o">|</span><span class="n">_</span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="fm">dev_err!</span><span class="p">(</span><span class="n">dev</span><span class="p">,</span><span class="w"> </span><span class="s">&#34;Unsupported chipset: {}</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span><span class="w"> </span><span class="n">boot42</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">})</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The chipset code is formed by combining the architecture and implementation fields — this is the inverse of how NVIDIA encodes the chipset into the register so bits are architecture bits are shifted to left:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">impl</span><span class="w"> </span><span class="no">NV_PMC_BOOT_42</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Combines the architecture and implementation fields into a unique chipset code.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// E.g., architecture 0x16 (Turing) + implementation 0x2 = chipset 0x162 (TU102).
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="k">fn</span> <span class="nf">chipset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="o">&lt;</span><span class="n">Chipset</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="bp">self</span><span class="p">.</span><span class="n">architecture</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">arch</span><span class="o">|</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="c1">// Shift architecture left by the implementation field width, OR in impl.
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="p">((</span><span class="n">arch</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="bp">Self</span>::<span class="no">IMPLEMENTATION_RANGE</span><span class="p">.</span><span class="n">len</span><span class="p">())</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="o">|</span><span class="w"> </span><span class="kt">u32</span>::<span class="n">from</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">implementation</span><span class="p">())</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">})</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">.</span><span class="n">and_then</span><span class="p">(</span><span class="n">Chipset</span>::<span class="n">try_from</span><span class="p">)</span><span class="w">  </span><span class="c1">// Match against known chipsets or return ENODEV.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>For example, a TU102 GPU has architecture <code>0x16</code> (Turing) and implementation <code>0x2</code>, producing chipset code <code>0x162</code>.</p>
+<figure><img src="/images/nova/gpu-identification.png"
+    alt="GPU identification sequence"><figcaption>
+      <p>GPU identification sequence</p>
+    </figcaption>
+</figure>
+
+<h3 id="the-define_chipset-macro">
+  The <code>define_chipset!</code> Macro
+  <a class="heading-link" href="#the-define_chipset-macro">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Rather than writing the <code>Chipset</code> enum, its <code>TryFrom&lt;u32&gt;</code>, and its <code>name()</code> method by hand, Nova uses a macro that generates all three from a single definition:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="fm">define_chipset!</span><span class="p">({</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Turing (RTX 20 series)
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">TU102</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x162</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">TU104</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x164</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">TU106</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x166</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Ampere (RTX 30 series)
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">GA102</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x172</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">GA104</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x174</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Ada (RTX 40 series)
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">AD102</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x192</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">AD104</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x194</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Blackwell (RTX 50 series)
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">GB202</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x1b2</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="no">GB203</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0x1b3</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="p">});</span><span class="w">
+</span></span></span></code></pre></div><p>(The full list in the source includes every supported variant across Turing, Ampere, Hopper, Ada, and Blackwell generations.)</p>
+<p>This generates:</p>
+<ul>
+<li>The <code>Chipset</code> enum with each variant.</li>
+<li><code>TryFrom&lt;u32&gt;</code> matching each value to its variant, returning <code>ENODEV</code> for unknown chipsets.</li>
+<li><code>Chipset::ALL</code> — a <code>&amp;'static [Chipset]</code> slice of all supported chipsets.</li>
+<li><code>Chipset::name()</code> — a lowercase string version (<code>&quot;tu102&quot;</code>, <code>&quot;ga100&quot;</code>, etc.) used for firmware path construction.</li>
+</ul>
+<p>The <code>Chipset</code> type also derives additional methods like <code>arch()</code> that maps each chipset to its <code>Architecture</code> generation, and helper predicates like <code>needs_fwsec_bootloader()</code> and <code>uses_fsp()</code> that encode hardware generation boundaries.</p>
+<h2 id="safe-register-access-and-bitfields">
+  Safe Register Access and Bitfields
+  <a class="heading-link" href="#safe-register-access-and-bitfields">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>We&rsquo;ve already seen the <code>register!</code> macro in use during GPU identification — it declared <code>NV_PMC_BOOT_0</code> and <code>NV_PMC_BOOT_42</code> with typed fields. But the macro handles more than simple fixed-offset registers. This section covers the full design: how Nova creates a compile-time-checked register access layer, and the complementary <code>bitfield!</code> macro for non-MMIO structured values.</p>
+<p>To see why this matters, compare how a C driver reads the same register:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// C (traditional approach — e.g., Nouveau)
+</span></span></span><span class="line"><span class="cl"><span class="n">u32</span> <span class="n">val</span> <span class="o">=</span> <span class="nf">nvkm_rd32</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="mh">0xa00</span><span class="p">);</span>        <span class="c1">// raw offset, no bounds check possible
+</span></span></span><span class="line"><span class="cl"><span class="n">u32</span> <span class="n">arch</span> <span class="o">=</span> <span class="p">(</span><span class="n">val</span> <span class="o">&gt;&gt;</span> <span class="mi">24</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x3f</span><span class="p">;</span>             <span class="c1">// manual bit extract, easy to misshift
+</span></span></span><span class="line"><span class="cl"><span class="c1">// If you typo the offset or shift amount, you get silent data corruption at runtime.
+</span></span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// Rust (Nova)
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">boot42</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">regs</span>::<span class="no">NV_PMC_BOOT_42</span><span class="p">);</span><span class="w">  </span><span class="c1">// offset checked at compile time, lifetime enforced
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">arch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">boot42</span><span class="p">.</span><span class="n">architecture</span><span class="p">()</span><span class="o">?</span><span class="p">;</span><span class="w">              </span><span class="c1">// typed enum, unknown values must be handled
+</span></span></span><span class="line"><span class="cl"><span class="c1">// Wrong offset = compile error. Wrong field = type error. Unknown chipset = forced error handling.
+</span></span></span></code></pre></div><h3 id="the-register-macro">
+  The <code>register!</code> Macro
+  <a class="heading-link" href="#the-register-macro">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>The <code>register!</code> macro (provided by the kernel crate&rsquo;s <code>io::register</code> module) defines typed register structs with compile-time offsets and named bit fields:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="fm">register!</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="no">NV_PMC_BOOT_0</span><span class="p">(</span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="o">@</span><span class="w"> </span><span class="mh">0x00000000</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">28</span>:<span class="mi">24</span><span class="w">   </span><span class="n">architecture_0</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">23</span>:<span class="mi">20</span><span class="w">   </span><span class="n">implementation</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">8</span>:<span class="mi">8</span><span class="w">     </span><span class="n">architecture_1</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">7</span>:<span class="mi">4</span><span class="w">     </span><span class="n">major_revision</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">3</span>:<span class="mi">0</span><span class="w">     </span><span class="n">minor_revision</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>This generates a struct <code>NV_PMC_BOOT_0</code> that the <code>Io</code> trait can read from BAR0 at offset 0x0. The field declarations produce accessor methods: <code>boot0.architecture_0()</code>, <code>boot0.implementation()</code>, etc.</p>
+<p>The macro supports several offset forms, demonstrating how one macro handles the full range of register addressing patterns found in GPU hardware:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="fm">register!</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Fixed absolute offset — the common case.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="no">NV_PMC_BOOT_42</span><span class="p">(</span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="o">@</span><span class="w"> </span><span class="mh">0x00000a00</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">..</span><span class="p">.</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Array with stride — 64 contiguous 32-bit registers starting at 0x1400.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Accessed as NV_PBUS_SW_SCRATCH[index].
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="no">NV_PBUS_SW_SCRATCH</span><span class="p">(</span><span class="kt">u32</span><span class="p">)[</span><span class="mi">64</span><span class="p">]</span><span class="w"> </span><span class="o">@</span><span class="w"> </span><span class="mh">0x00001400</span><span class="w"> </span><span class="p">{}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Alias into an array element — gives a meaningful name to scratch reg 0xe.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="no">NV_PBUS_SW_SCRATCH_0E_FRTS_ERR</span><span class="p">(</span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="no">NV_PBUS_SW_SCRATCH</span><span class="p">[</span><span class="mh">0xe</span><span class="p">]</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">..</span><span class="p">.</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// Base-relative offset — the offset is added to a base address determined
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// by the type parameter E (a FalconEngine). Resolved at compile time.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="no">NV_PFALCON_FALCON_HWCFG1</span><span class="p">(</span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="o">@</span><span class="w"> </span><span class="n">PFalconBase</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mh">0x0012c</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">..</span><span class="p">.</span><span class="w"> </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The base-relative form is how Nova handles registers that exist at different addresses on different falcon engines (GSP at 0x110000, SEC2 at 0x840000, FSP at 0x8f2000). The <code>WithBase::of::&lt;E&gt;()</code> mechanism resolves the engine&rsquo;s base address at compile time — zero runtime cost, wrong-engine access is a type error:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// Reads HWCFG1 register from the GSP falcon&#39;s register space.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// The offset PFalconBase + 0x0012c is resolved at compile time to 0x11012c
+</span></span></span><span class="line"><span class="cl"><span class="c1">// because Gsp implements RegisterBase&lt;PFalconBase&gt; with BASE = 0x110000.
+</span></span></span><span class="line"><span class="cl"><span class="kd">let</span><span class="w"> </span><span class="n">hwcfg1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">bar</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">regs</span>::<span class="no">NV_PFALCON_FALCON_HWCFG1</span>::<span class="n">of</span>::<span class="o">&lt;</span><span class="n">Gsp</span><span class="o">&gt;</span><span class="p">());</span><span class="w">
+</span></span></span></code></pre></div><h3 id="the-bitfield-macro">
+  The <code>bitfield!</code> Macro
+  <a class="heading-link" href="#the-bitfield-macro">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>While <code>register!</code> handles the MMIO mechanics, Nova defines a complementary <code>bitfield!</code> macro for standalone typed wrappers around raw integers. This is used for values that aren&rsquo;t directly MMIO registers but still have structured bit fields (e.g., firmware headers, command queue entries):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="fm">bitfield!</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// A u32 wrapper with two named fields.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="w"> </span><span class="k">struct</span> <span class="nc">ControlReg</span><span class="p">(</span><span class="kt">u32</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// Bit 7: boolean field. Accessor returns a State enum via From&lt;bool&gt;.
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">7</span>:<span class="mi">7</span><span class="w"> </span><span class="n">state</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">State</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// Bits 3:0: 4-bit field. Accessor returns Result&lt;Mode&gt; via TryFrom&lt;u8&gt;
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="c1">// (fallible — not all 4-bit values are valid Mode variants).
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="mi">3</span>:<span class="mi">0</span><span class="w"> </span><span class="n">mode</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="kt">u8</span><span class="w"> </span><span class="o">?=&gt;</span><span class="w"> </span><span class="n">Mode</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The field type annotations control how raw bits become meaningful values.</p>
+<p>Two Rust traits are central here: <code>From</code> and <code>TryFrom</code>. Both define a standard way to convert one type into another. <code>From</code> is <em>infallible</em> — the conversion always succeeds (e.g., every possible single-bit value maps to <code>true</code> or <code>false</code>). <code>TryFrom</code> is <em>fallible</em> — the conversion can fail and returns a <code>Result</code> that the caller must handle (e.g., a 6-bit field has 64 possible values, but only 7 of them correspond to known GPU architectures).</p>
+<ul>
+<li><strong><code>as bool</code></strong> — Single-bit field, returned as boolean.</li>
+<li><strong><code>as u8</code></strong> — Multi-bit field, cast to the specified integer type.</li>
+<li><strong><code>=&gt; EnumType</code></strong> — Infallible conversion via <code>From</code>. The enum must cover all possible bit patterns.</li>
+<li><strong><code>?=&gt; EnumType</code></strong> — Fallible conversion via <code>TryFrom</code>. Returns <code>Result</code> for registers with reserved/invalid bit patterns. The caller is forced to handle the &ldquo;unknown value&rdquo; case — the compiler won&rsquo;t let you ignore it.</li>
+</ul>
+<p>The macro generates a zero-overhead wrapper around the raw integer with:</p>
+<ul>
+<li>Typed getter methods for each field.</li>
+<li>Builder-pattern setters (<code>.set_mode(value)</code>) for constructing register values.</li>
+<li>Automatic <code>Debug</code> and <code>Default</code> implementations.</li>
+</ul>
+<h3 id="compile-time-safety-guarantees">
+  Compile-Time Safety Guarantees
+  <a class="heading-link" href="#compile-time-safety-guarantees">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Together, these macros provide several guarantees that C drivers cannot:</p>
+<ol>
+<li><strong>Offset bounds checking.</strong> Register offsets are <code>const</code> — accessing an offset beyond BAR0&rsquo;s 16 MB size is a compile error.</li>
+<li><strong>Bit range validation.</strong> Boolean fields must be exactly one bit wide. MSB (most significant bit — the highest-numbered bit in the range) must be ≥ LSB (least significant bit — the lowest-numbered). These are checked with <code>build_assert!</code>.</li>
+<li><strong>Type-safe conversions.</strong> Reading a register field that maps to an enum with <code>?=&gt;</code> forces the caller to handle the possibility of an invalid value.</li>
+<li><strong>Lifetime enforcement.</strong> <code>Bar0&lt;'a&gt;</code> cannot outlive the PCI device binding — accessing registers after device unbind is structurally impossible.</li>
+</ol>
+<h2 id="hardware-abstraction-the-hal-pattern">
+  Hardware Abstraction: The HAL Pattern
+  <a class="heading-link" href="#hardware-abstraction-the-hal-pattern">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Nova uses traits to abstract hardware differences between generations. Each subsystem defines a Hardware Abstraction Layer trait — a contract that each generation must fulfill. The trait methods represent the <em>operations</em> that differ between chip families:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="sd">/// Trait defining generation-specific GPU behavior.
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// Each method represents something that works differently across architectures.
+</span></span></span><span class="line"><span class="cl"><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="k">trait</span><span class="w"> </span><span class="n">GpuHal</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Wait for the GPU&#39;s own firmware to finish initializing (devinit).
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// No-op on Hopper+ where FSP handles this.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">fn</span> <span class="nf">wait_gfw_boot_completion</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span>: <span class="nc">Bar0</span><span class="o">&lt;</span><span class="nb">&#39;_</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// DMA address width supported by this architecture (e.g., 47-bit or 52-bit).
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">fn</span> <span class="nf">dma_mask</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">DmaMask</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="sd">/// Location of the PCI config mirror in BAR0 (varies by generation).
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">fn</span> <span class="nf">pci_config_mirror_range</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nc">Range</span><span class="o">&lt;</span><span class="kt">u32</span><span class="o">&gt;</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The <code>gpu_hal()</code> function selects the appropriate implementation based on the chipset&rsquo;s architecture — called once during init, then the returned reference is used throughout the driver&rsquo;s lifetime:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="sd">/// Returns the GpuHal implementation for the given chipset.
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// Groups of architectures share behavior — Turing/Ampere/Ada all use the
+</span></span></span><span class="line"><span class="cl"><span class="sd">/// TU102 HAL, while Hopper and Blackwell use GH100.
+</span></span></span><span class="line"><span class="cl"><span class="k">pub</span><span class="p">(</span><span class="k">super</span><span class="p">)</span><span class="w"> </span><span class="k">fn</span> <span class="nf">gpu_hal</span><span class="p">(</span><span class="n">chipset</span>: <span class="nc">Chipset</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="kp">&amp;</span><span class="nb">&#39;static</span> <span class="nc">dyn</span><span class="w"> </span><span class="n">GpuHal</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">match</span><span class="w"> </span><span class="n">chipset</span><span class="p">.</span><span class="n">arch</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">Architecture</span>::<span class="n">Turing</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Architecture</span>::<span class="n">Ampere</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Architecture</span>::<span class="n">Ada</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">tu102</span>::<span class="no">TU102_HAL</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">Architecture</span>::<span class="n">Hopper</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Architecture</span>::<span class="n">BlackwellGB10x</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">Architecture</span>::<span class="n">BlackwellGB20x</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">gh100</span>::<span class="no">GH100_HAL</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>However, not all HALs can be global constants like <code>GpuHal</code>. HALs with generic type parameters (like <code>FalconHal&lt;E&gt;</code>, parameterized over the engine type) are allocated at runtime instead, since Rust can&rsquo;t define all the generic combinations as static constants.</p>
+<p>This pattern is repeated across nova-core:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Subsystem</th>
+          <th>Trait</th>
+          <th>Selection</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>GPU top-level</td>
+          <td><code>GpuHal</code></td>
+          <td>Global constant, picked once at init</td>
+      </tr>
+      <tr>
+          <td>Falcon engines</td>
+          <td><code>FalconHal&lt;E&gt;</code></td>
+          <td>Allocated at runtime (generic)</td>
+      </tr>
+      <tr>
+          <td>Framebuffer</td>
+          <td><code>FbHal</code></td>
+          <td>Global constant, picked once at init</td>
+      </tr>
+      <tr>
+          <td>GSP boot</td>
+          <td><code>GspHal</code></td>
+          <td>Global constant, picked once at init</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="gfw-boot-waiting-for-the-gpu-to-initialize-itself">
+  GFW Boot: Waiting for the GPU to Initialize Itself
+  <a class="heading-link" href="#gfw-boot-waiting-for-the-gpu-to-initialize-itself">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Before Nova can do anything meaningful, it must wait for the GPU&rsquo;s own firmware (devinit) to finish initializing. Upon reset, several GPU microcontrollers run firmware from the VBIOS to set up clocks, timing circuits, VRAM timings, and power sequencing.</p>
+<p>On Turing through Ada GPUs, the driver polls a scratch register until the GPU signals completion. This is a <code>GpuHal</code> method — on Hopper/Blackwell, the implementation is an empty no-op:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="k">fn</span> <span class="nf">wait_gfw_boot_completion</span><span class="p">(</span><span class="o">&amp;</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span>: <span class="nc">Bar0</span><span class="o">&lt;</span><span class="nb">&#39;_</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span>-&gt; <span class="nb">Result</span> <span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// read_poll_timeout: repeatedly call the closure (the `|| { ... }` anonymous
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// function below), check the predicate, sleep 1ms between attempts, give up
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="c1">// after 4 seconds.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">read_poll_timeout</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="o">||</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nb">Ok</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="c1">// Step 1: Check that FWSEC has lowered its privilege level.
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="c1">// The GFW_BOOT register is inaccessible until this happens.
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="n">bar</span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">regs</span>::<span class="no">NV_PGC6_AON_SECURE_SCRATCH_GROUP_05_PRIV_LEVEL_MASK</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="p">.</span><span class="n">read_protection_level0</span><span class="p">()</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="c1">// Step 2: Read the actual boot completion flag.
+</span></span></span><span class="line"><span class="cl"><span class="w">                    </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">bar</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                        </span><span class="p">.</span><span class="n">read</span><span class="p">(</span><span class="n">regs</span>::<span class="no">NV_PGC6_AON_SECURE_SCRATCH_GROUP_05_0_GFW_BOOT</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                        </span><span class="p">.</span><span class="n">completed</span><span class="p">(),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">},</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="o">|&amp;</span><span class="n">gfw_booted</span><span class="o">|</span><span class="w"> </span><span class="n">gfw_booted</span><span class="p">,</span><span class="w">   </span><span class="c1">// Predicate: stop when true.
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">Delta</span>::<span class="n">from_millis</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w">        </span><span class="c1">// Poll interval.
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="n">Delta</span>::<span class="n">from_secs</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span><span class="w">          </span><span class="c1">// Timeout.
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">.</span><span class="n">map</span><span class="p">(</span><span class="o">|</span><span class="n">_</span><span class="o">|</span><span class="w"> </span><span class="p">())</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>There&rsquo;s a subtle two-step check here:</p>
+<ol>
+<li>First, verify that FWSEC (running on the GSP in Heavy-Secured mode) has lowered its privilege level — the status register is inaccessible until this happens.</li>
+<li>Then read the actual completion flag.</li>
+</ol>
+<p>On Hopper and Blackwell GPUs, this step is a no-op — the FSP (Foundation Security Processor) handles all early initialization, and the driver&rsquo;s boot path uses a different mechanism entirely.</p>
+<h2 id="the-full-initialization-sequence">
+  The Full Initialization Sequence
+  <a class="heading-link" href="#the-full-initialization-sequence">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Putting it all together, here&rsquo;s what happens when Nova initializes a GPU. (Note: <code>SysmemFlush</code> is a DMA page that enables the GPU to flush pending PCIe memory writes into system RAM — a hardware prerequisite before any falcon microcontroller reset. It&rsquo;s covered in detail in Part 3.)</p>
+<figure><img src="/images/nova/full-initialization.png"
+    alt="Full Nova&rsquo;s initialization sequence"><figcaption>
+      <p>Full Nova&rsquo;s initialization sequence</p>
+    </figcaption>
+</figure>
+
+<p>The key design insight: the initialization is expressed as a single <code>try_pin_init!</code> block where each field is initialized in declaration order. If any step fails, previously-initialized fields are dropped in reverse order — the <code>PinnedDrop</code> implementation (Rust&rsquo;s destructor for pinned types — code that runs automatically when the object is destroyed) on <code>GspResources</code> automatically runs the GSP unload sequence. No explicit error-handling cleanup paths needed.</p>
+<p>Compare to the equivalent pattern in C kernel drivers:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// C error handling (typical pattern)
+</span></span></span><span class="line"><span class="cl"><span class="n">err</span> <span class="o">=</span> <span class="nf">step1_identify_gpu</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">err</span> <span class="o">=</span> <span class="nf">step2_setup_dma</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="k">goto</span> <span class="n">undo_step1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">err</span> <span class="o">=</span> <span class="nf">step3_register_flush</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="k">goto</span> <span class="n">undo_step2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">err</span> <span class="o">=</span> <span class="nf">step4_boot_gsp</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="k">if</span> <span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="k">goto</span> <span class="n">undo_step3</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="nl">undo_step3</span><span class="p">:</span> <span class="nf">unregister_flush</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="nl">undo_step2</span><span class="p">:</span> <span class="nf">tear_down_dma</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="nl">undo_step1</span><span class="p">:</span> <span class="nf">release_gpu_id</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+</span></span></code></pre></div><p>Missing a <code>goto</code> label, cleaning up in wrong order, or forgetting a resource are common bugs in this pattern. In Nova, the compiler generates the correct cleanup chain from the struct definition — you cannot forget because the type system won&rsquo;t let you omit a <code>Drop</code> implementation for types that hold resources.</p>
+<p>The pattern for GPU initialization looks roughly like this (simplified — see <code>gpu.rs</code> for the full implementation):</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-rust" data-lang="rust"><span class="line"><span class="cl"><span class="c1">// drivers/gpu/nova-core/gpu.rs (simplified)
+</span></span></span><span class="line"><span class="cl"><span class="k">impl</span><span class="o">&lt;</span><span class="na">&#39;gpu</span><span class="o">&gt;</span><span class="w"> </span><span class="n">Gpu</span><span class="o">&lt;</span><span class="na">&#39;gpu</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">pub</span><span class="p">(</span><span class="k">crate</span><span class="p">)</span><span class="w"> </span><span class="k">fn</span> <span class="nf">new</span><span class="p">(</span><span class="n">pdev</span>: <span class="kp">&amp;</span><span class="na">&#39;gpu</span> <span class="nc">pci</span>::<span class="n">Device</span><span class="o">&lt;..</span><span class="p">.</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">bar</span>: <span class="nc">Bar0</span><span class="o">&lt;</span><span class="na">&#39;gpu</span><span class="o">&gt;</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span>-&gt; <span class="nc">impl</span><span class="w"> </span><span class="n">PinInit</span><span class="o">&lt;</span><span class="bp">Self</span><span class="p">,</span><span class="w"> </span><span class="n">Error</span><span class="o">&gt;</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="na">&#39;gpu</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="fm">try_pin_init!</span><span class="p">(</span><span class="bp">Self</span><span class="w"> </span><span class="p">{</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">spec</span>: <span class="nc">Spec</span>::<span class="n">new</span><span class="p">(</span><span class="n">pdev</span><span class="p">.</span><span class="n">as_ref</span><span class="p">(),</span><span class="w"> </span><span class="n">bar</span><span class="p">)</span><span class="o">?</span><span class="p">,</span><span class="w">       </span><span class="c1">// 1. Identify GPU
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">_</span>: <span class="p">{</span><span class="w"> </span><span class="cm">/* set DMA mask, wait GFW boot */</span><span class="w"> </span><span class="p">},</span><span class="w">   </span><span class="c1">// 2. Wait for HW init
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">sysmem_flush</span>: <span class="nc">SysmemFlush</span>::<span class="n">register</span><span class="p">(</span><span class="o">..</span><span class="p">.)</span><span class="o">?</span><span class="p">,</span><span class="w">  </span><span class="c1">// 3. Register flush page
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">gsp_resources</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="cm">/* falcon init + GSP boot */</span><span class="p">,</span><span class="w"> </span><span class="c1">// 4. Boot GSP firmware
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="n">gsp_static_info</span>: <span class="cm">/* query GPU info from GSP */</span><span class="p">,</span><span class="w"> </span><span class="c1">// 5. Get GPU metadata
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="p">})</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="p">}</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="p">}</span><span class="w">
+</span></span></span></code></pre></div><p>The <code>&lt;-</code> syntax indicates a pinned sub-initializer (the field is initialized in-place at its final address). If step 4 fails, <code>sysmem_flush</code> is dropped (unregistering the flush page). If step 5 fails, <code>gsp_resources</code> is dropped (which triggers <code>PinnedDrop</code> running the GSP unload sequence). The ownership model makes cleanup exhaustive and automatic.</p>
+<h2 id="summary">
+  Summary
+  <a class="heading-link" href="#summary">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Part 1 has covered the foundational layers of Nova:</p>
+<ul>
+<li><strong>Two-driver split</strong>: nova-core handles hardware, nova-drm handles user-space, connected via the auxiliary bus.</li>
+<li><strong>Typed BAR0</strong>: MMIO access with compile-time bounds checking and lifetime enforcement.</li>
+<li><strong>GPU identification</strong>: A two-stage algorithm reading boot registers and matching against a macro-generated chipset enum.</li>
+<li><strong>Safe register access</strong>: Two complementary macros (<code>register!</code> and <code>bitfield!</code>) create a fully typed, compile-time-checked register layer.</li>
+<li><strong>HAL pattern</strong>: Traits abstract generation-specific behavior with static or boxed dispatch.</li>
+<li><strong>Pin-init initialization</strong>: The entire GPU bring-up is expressed as a pinned initializer with automatic cleanup on failure.</li>
+</ul>
+<p>In Part 2, we&rsquo;ll dive into the GPU&rsquo;s internal microcontrollers (Falcons), firmware loading with type-state safety, the GSP boot sequence, and the command queue that enables communication between the driver and the GPU&rsquo;s system processor.</p>
+<hr>
+<p><em>Sources: <a href="https://github.com/NVIDIA/nova"  class="external-link" target="_blank" rel="noopener">Nova GPU driver source</a> at <code>drivers/gpu/nova-core/</code> and <code>drivers/gpu/drm/nova/</code> in the Linux kernel tree. <a href="https://rust-for-linux.com/nova-gpu-driver"  class="external-link" target="_blank" rel="noopener">Rust-for-Linux Nova page</a>. <a href="https://docs.kernel.org/gpu/nova/core/todo.html"  class="external-link" target="_blank" rel="noopener">Nova kernel documentation</a>. <a href="https://lore.kernel.org/nova-gpu/"  class="external-link" target="_blank" rel="noopener">nova-gpu mailing list archive</a>.</em></p>
+
+      </div>
+
+
+      <footer>
+        
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2015 -
+    
+    2026
+     Hector Zelaya 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.min.6ae284be93d2d19dad1f02b0039508d9aab3180a12a06dcc71b0b0ef7825a317.js" integrity="sha256-auKEvpPS0Z2tHwKwA5UI2aqzGAoSoG3McbCw73gloxc="></script>
+  
+
+  
+
+  
+
+
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-DM273NM2FB"></script>
+      <script>
+        var doNotTrack = false;
+        if ( true ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-DM273NM2FB');
+        }
+      </script>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+
+</html>

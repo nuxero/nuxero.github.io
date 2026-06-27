@@ -6,8 +6,15 @@
     <description>Recent content in Hector Zelaya on HectorZelaya.dev</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sat, 13 Jun 2026 20:26:42 -0600</lastBuildDate>
+    <lastBuildDate>Sat, 27 Jun 2026 13:56:42 -0600</lastBuildDate>
     <atom:link href="https://www.hectorzelaya.dev/authors/hector-zelaya/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Nova: A NVIDIA Driver Written in Rust for the Linux Kernel - Part 1</title>
+      <link>https://www.hectorzelaya.dev/posts/nova-driver/part1-architecture-initialization-hardware-discovery/</link>
+      <pubDate>Sat, 27 Jun 2026 13:56:42 -0600</pubDate>
+      <guid>https://www.hectorzelaya.dev/posts/nova-driver/part1-architecture-initialization-hardware-discovery/</guid>
+      <description>&lt;h2 id=&#34;part-1-architecture-initialization--hardware-discovery&#34;&gt;&#xA;  Part 1: Architecture, Initialization &amp;amp; Hardware Discovery&#xA;  &lt;a class=&#34;heading-link&#34; href=&#34;#part-1-architecture-initialization--hardware-discovery&#34;&gt;&#xA;    &lt;i class=&#34;fa-solid fa-link&#34; aria-hidden=&#34;true&#34; title=&#34;Link to heading&#34;&gt;&lt;/i&gt;&#xA;    &lt;span class=&#34;sr-only&#34;&gt;Link to heading&lt;/span&gt;&#xA;  &lt;/a&gt;&#xA;&lt;/h2&gt;&#xA;&lt;hr&gt;&#xA;&lt;p&gt;&lt;em&gt;This is Part 1 of a three-part series exploring &lt;a href=&#34;https://rust-for-linux.com/nova-gpu-driver&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Nova&lt;/a&gt;, a new open-source GPU driver written in Rust for NVIDIA GPUs in the Linux kernel. This post covers the two-driver architecture, PCI initialization, BAR0 mapping, GPU identification, and safe register access.&lt;/em&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;em&gt;Note: Nova is under active development. The code shown here reflects the upstream state as of writing, but APIs are evolving — some features described are work-in-progress. For the current state, check the &lt;a href=&#34;https://lore.kernel.org/nova-gpu/&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;nova-gpu mailing list&lt;/a&gt; and the &lt;a href=&#34;https://github.com/NVIDIA/nova&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;NVIDIA/nova&lt;/a&gt; development branch.&lt;/em&gt;&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Writing My First Linux Kernel Patch: From User Space to Kernel with Kiro IDE</title>
       <link>https://www.hectorzelaya.dev/posts/first-kernel-patch/</link>
