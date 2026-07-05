@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cloud on HectorZelaya.dev</title>
+    <link>https://www.hectorzelaya.dev/tags/cloud/</link>
+    <description>Recent content in Cloud on HectorZelaya.dev</description>
+    <generator>Hugo</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 05 Jul 2026 15:49:00 -0600</lastBuildDate>
+    <atom:link href="https://www.hectorzelaya.dev/tags/cloud/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Demystifying AWS Networking: From Cloud Basics to Building Your First VPC</title>
+      <link>https://www.hectorzelaya.dev/posts/aws/aws-networking-explained/</link>
+      <pubDate>Sun, 05 Jul 2026 15:49:00 -0600</pubDate>
+      <guid>https://www.hectorzelaya.dev/posts/aws/aws-networking-explained/</guid>
+      <description>&lt;p&gt;Networking is the foundation of everything you build in the cloud. Before you can run a web server, store a file, or host a database, you need a place for it to live and a way for it to communicate.&lt;/p&gt;&#xA;&lt;p&gt;In this post, we are going to break down the physical reality of the cloud, explain the core concepts of AWS networking in plain English, and finally, build a working network from scratch using the AWS Command Line Interface (CLI).&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

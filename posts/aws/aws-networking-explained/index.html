@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>
+  Demystifying AWS Networking: From Cloud Basics to Building Your First VPC · HectorZelaya.dev
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Hector Zelaya">
+<meta name="description" content="A beginner-friendly breakdown of AWS networking concepts and a hands-on tutorial to build a working VPC with the AWS CLI">
+<meta name="keywords" content="blog,webrtc,developer advocate,aws,nixos,linux,real-time communications">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Demystifying AWS Networking: From Cloud Basics to Building Your First VPC">
+  <meta name="twitter:description" content="A beginner-friendly breakdown of AWS networking concepts and a hands-on tutorial to build a working VPC with the AWS CLI">
+
+<meta property="og:url" content="https://www.hectorzelaya.dev/posts/aws/aws-networking-explained/">
+  <meta property="og:site_name" content="HectorZelaya.dev">
+  <meta property="og:title" content="Demystifying AWS Networking: From Cloud Basics to Building Your First VPC">
+  <meta property="og:description" content="A beginner-friendly breakdown of AWS networking concepts and a hands-on tutorial to build a working VPC with the AWS CLI">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-07-05T15:49:00-06:00">
+    <meta property="article:modified_time" content="2026-07-05T15:49:00-06:00">
+    <meta property="article:tag" content="Aws">
+    <meta property="article:tag" content="Networking">
+    <meta property="article:tag" content="Cloud">
+    <meta property="article:tag" content="Vpc">
+    <meta property="article:tag" content="Tutorial">
+
+
+
+
+<link rel="canonical" href="https://www.hectorzelaya.dev/posts/aws/aws-networking-explained/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.min.f8ac2fdd0cb7e56145845d949b5c036d40cd5061c013fd446f2f54a63ade62e8.css" integrity="sha256-&#43;Kwv3Qy35WFFhF2Um1wDbUDNUGHAE/1Eby9UpjreYug=" crossorigin="anonymous" media="screen" />
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.min.ad48f476275974885bdc03d5251e3cdbe1678c54a63ff772376b0ed2adc468dd.css" integrity="sha256-rUj0didZdIhb3APVJR482&#43;FnjFSmP/dyN2sO0q3EaN0=" crossorigin="anonymous" media="screen" />
+  
+
+
+
+ 
+
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="https://www.hectorzelaya.dev/">
+      HectorZelaya.dev
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about/">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/music/">Music</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="https://www.hectorzelaya.dev/posts/aws/aws-networking-explained/">
+              Demystifying AWS Networking: From Cloud Basics to Building Your First VPC
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2026-07-05T15:49:00-06:00">
+                July 5, 2026
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              13-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/hector-zelaya/">Hector Zelaya</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/aws/">Aws</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/networking/">Networking</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/cloud/">Cloud</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/vpc/">Vpc</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/tutorial/">Tutorial</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <p>Networking is the foundation of everything you build in the cloud. Before you can run a web server, store a file, or host a database, you need a place for it to live and a way for it to communicate.</p>
+<p>In this post, we are going to break down the physical reality of the cloud, explain the core concepts of AWS networking in plain English, and finally, build a working network from scratch using the AWS Command Line Interface (CLI).</p>
+<h2 id="the-physical-reality-what-is-the-cloud">
+  The Physical Reality: What is the Cloud?
+  <a class="heading-link" href="#the-physical-reality-what-is-the-cloud">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>People often talk about &ldquo;the cloud&rdquo; as if it&rsquo;s a magical, invisible entity. In reality, <strong>the cloud is essentially a vast network of world-class data centers that you can tap into over the internet.</strong> The core business of a cloud vendor such as Amazon Web Services (AWS) is leasing out this massive computing power (like virtual servers) and managed services (like databases) to organizations. Instead of a company spending millions of dollars buying their own hardware, managing temperature-controlled server rooms, and paying hefty electric bills, they simply rent exactly the capacity they need from AWS by the minute.</p>
+<p>To make this possible, AWS builds and maintains massive, highly secure, interconnected data centers all over the world. When you click a button in AWS, you are spinning up resources inside one of these very real physical buildings.</p>
+<h2 id="the-global-infrastructure-where-does-your-code-live">
+  The Global Infrastructure: Where Does Your Code Live?
+  <a class="heading-link" href="#the-global-infrastructure-where-does-your-code-live">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>When you deploy something on AWS, you have to choose <em>where</em> it goes. AWS divides its physical infrastructure into three main concepts:</p>
+<h3 id="1-regions">
+  1. Regions
+  <a class="heading-link" href="#1-regions">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>A Region is a physical, geographic location in the world (like Northern Virginia, London, or Tokyo). You usually choose a region closest to your customers so your website loads faster.</p>
+<h3 id="2-availability-zones-azs">
+  2. Availability Zones (AZs)
+  <a class="heading-link" href="#2-availability-zones-azs">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Inside every Region are multiple Availability Zones (usually 3 or more). An AZ is one or more discrete data centers with redundant power, networking, and connectivity.</p>
+<ul>
+<li><strong>Why do we need AZs?</strong> If a storm knocks out power to one data center (one AZ), your application can stay online because it is also running in a second data center (another AZ) miles away.</li>
+</ul>
+<h3 id="3-edge-locations">
+  3. Edge Locations
+  <a class="heading-link" href="#3-edge-locations">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>These are smaller data centers located even closer to end-users (in hundreds of cities globally). They are mainly used to cache (temporarily store) static content like images and videos so they load instantly for users, no matter where they are in the world.</p>
+<h2 id="core-networking-concepts-the-virtual-private-cloud">
+  Core Networking Concepts: The Virtual Private Cloud
+  <a class="heading-link" href="#core-networking-concepts-the-virtual-private-cloud">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Now that we know the physical layout, let&rsquo;s look at the virtual network you will build on top of it.</p>
+<h3 id="what-is-a-vpc">
+  What is a VPC?
+  <a class="heading-link" href="#what-is-a-vpc">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>A <strong>VPC (Virtual Private Cloud)</strong> is your own logically isolated section of the AWS cloud. Think of it as your own private virtual data center. When you create a VPC, you draw a virtual fence around your slice of the AWS infrastructure.</p>
+<h3 id="subnets-dividing-the-network">
+  Subnets: Dividing the Network
+  <a class="heading-link" href="#subnets-dividing-the-network">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>A <strong>Subnet</strong> is a smaller chunk of your VPC. You use subnets to organize your resources. Subnets are tied to a specific Availability Zone. There are two main types:</p>
+<ul>
+<li><strong>Public Subnet:</strong> Has direct access to the internet. You put things here that the public needs to see, like a web server or a public load balancer.</li>
+<li><strong>Private Subnet:</strong> Has no direct access to and from the internet. You put sensitive things here, like your customer database.</li>
+</ul>
+<h3 id="the-gateways--routing">
+  The Gateways &amp; Routing
+  <a class="heading-link" href="#the-gateways--routing">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>How does traffic actually flow in and out of your VPC?</p>
+<ul>
+<li><strong>Internet Gateway (IGW):</strong> This is the front door to your VPC. It allows in and out communication between your network and the outside internet.</li>
+<li><strong>Route Tables:</strong> This is the rulebook. It tells network traffic where it is allowed to go.</li>
+<li><strong>NAT Gateway:</strong> What if a database in your <em>private</em> subnet needs to download a security update from the internet? A NAT Gateway allows private instances to reach out to the internet, while blocking the internet from reaching in.</li>
+<li><strong>Security Groups:</strong> Think of these as the bouncers for your servers. They are virtual firewalls attached directly to your instances that dictate exactly what traffic is allowed in (like SSH or HTTP) and what is allowed out.</li>
+</ul>
+<h3 id="accessing-your-servers-ssh-and-key-pairs">
+  Accessing Your Servers: SSH and Key Pairs
+  <a class="heading-link" href="#accessing-your-servers-ssh-and-key-pairs">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Once your virtual servers are running, how do you actually log into them?</p>
+<ul>
+<li><strong>SSH (Secure Shell):</strong> This is a standard network protocol used to securely connect to a remote server over the internet. It gives you a command-line terminal to remotely control your EC2 instance.</li>
+<li><strong>Key Pairs:</strong> Instead of using a vulnerable password, AWS uses cryptography to verify your identity. Think of a key pair like a lock and a key. The <strong>public key</strong> is given to AWS (who installs it as the &ldquo;lock&rdquo; on your server), and the <strong>private key</strong> is a file you download to your computer (your physical &ldquo;key&rdquo;). You must have the private key file on your machine to log in.</li>
+</ul>
+<h2 id="what-we-are-building">
+  What We Are Building
+  <a class="heading-link" href="#what-we-are-building">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Before we dive into the command line, here is a visual map of the network architecture we are about to build. Notice how the region contains the VPC, which contains the Subnets, and how traffic flows from the outside internet all the way down to our servers.</p>
+<figure><img src="/images/aws/vpc.png"
+    alt="Visual representation of a VPC and its associated resources"><figcaption>
+      <p>Visual representation of a VPC and its associated resources</p>
+    </figcaption>
+</figure>
+
+<h2 id="hands-on-tutorial-building--testing-a-vpc-with-the-aws-cli">
+  Hands-On Tutorial: Building &amp; Testing a VPC with the AWS CLI
+  <a class="heading-link" href="#hands-on-tutorial-building--testing-a-vpc-with-the-aws-cli">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Let&rsquo;s put this blueprint into practice. We are going to build a VPC with one public subnet, one private subnet, and deploy an EC2 server in each. Finally, we&rsquo;ll prove the network works.</p>
+<p>After creating each resource, we will store its ID (a string that identifies that resources within AWS) to be used in subsequent command. Here I provide the commands for Unix-like systems, if you&rsquo;re using Windows adapt the command to the correct syntax. Also make sure to replace the YOUR_*_ID with the actual value from the output of the creation command.</p>
+<p><em>Prerequisite: You need an AWS account and the AWS CLI installed and configured on your computer.</em></p>
+<p><strong>Important: When you&rsquo;re done with the steps or want to step out from your computer for several hours, don&rsquo;t forget to follow the cleanup steps to prevent being charged for unused resources</strong></p>
+<h3 id="step-1-create-the-vpc">
+  Step 1: Create the VPC
+  <a class="heading-link" href="#step-1-create-the-vpc">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>To start, we&rsquo;ll carve out our virtual data center by assigning it a primary block of IP addresses (known as a CIDR block).</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Creates a VPC with a /16 block, providing over 65,000 available IP addresses</span>
+</span></span><span class="line"><span class="cl">aws ec2 create-vpc --cidr-block 10.0.0.0/16
+</span></span></code></pre></div><p>Take note of the <code>VpcId</code> that is returned in your terminal. You will need it for the next steps!</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># save the VPC id to an environment variable</span>
+</span></span><span class="line"><span class="cl"><span class="nv">VPC_ID</span><span class="o">=</span>YOUR_VPC_ID
+</span></span></code></pre></div><h3 id="step-2-create-the-subnets">
+  Step 2: Create the Subnets
+  <a class="heading-link" href="#step-2-create-the-subnets">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Next, we divide our VPC into two smaller networks. We&rsquo;ll specify the VPC ID, the smaller IP range for the subnet, and the specific Availability Zone we want to use.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># 1. Create the Public Subnet using a smaller /24 block</span>
+</span></span><span class="line"><span class="cl">aws ec2 create-subnet <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --vpc-id <span class="nv">$VPC_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --cidr-block 10.0.1.0/24 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --availability-zone us-east-1a
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 2. Create the Private Subnet using a different /24 block in the same zone</span>
+</span></span><span class="line"><span class="cl">aws ec2 create-subnet <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --vpc-id <span class="nv">$VPC_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --cidr-block 10.0.2.0/24 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --availability-zone us-east-1a
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 3. Save the SUBNETS ID to an environment variable</span>
+</span></span><span class="line"><span class="cl"><span class="nv">PUBLIC_SUBNET_ID</span><span class="o">=</span>YOUR_PUBLIC_SUBNET_ID
+</span></span><span class="line"><span class="cl"><span class="nv">PRIVATE_SUBNET_ID</span><span class="o">=</span>YOUR_PRIVATE_SUBNET_ID
+</span></span></code></pre></div><p>By default, instances launched in a VPC do not get public IP addresses. We&rsquo;ll modify the public subnet so that any server placed inside it automatically receives a public IP.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Update the public subnet to automatically map a public IP on launch</span>
+</span></span><span class="line"><span class="cl">aws ec2 modify-subnet-attribute <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --subnet-id <span class="nv">$PUBLIC_SUBNET_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --map-public-ip-on-launch
+</span></span></code></pre></div><h3 id="step-3-create-and-attach-the-internet-gateway">
+  Step 3: Create and Attach the Internet Gateway
+  <a class="heading-link" href="#step-3-create-and-attach-the-internet-gateway">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Our VPC needs a door to the internet. We&rsquo;ll create the Internet Gateway first, and then attach it to our VPC.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># 1. Create the gateway resource</span>
+</span></span><span class="line"><span class="cl">aws ec2 create-internet-gateway
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 2. Store the gateway id in an environment variable</span>
+</span></span><span class="line"><span class="cl"><span class="nv">IGW_ID</span><span class="o">=</span>YOUR_IGW_ID
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 3. Attach the newly created gateway to your VPC</span>
+</span></span><span class="line"><span class="cl">aws ec2 attach-internet-gateway <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --vpc-id <span class="nv">$VPC_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --internet-gateway-id <span class="nv">$IGW_ID</span>
+</span></span></code></pre></div><h3 id="step-4-configure-the-route-table">
+  Step 4: Configure the Route Table
+  <a class="heading-link" href="#step-4-configure-the-route-table">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Right now, our &ldquo;public&rdquo; subnet doesn&rsquo;t know the internet gateway exists. We need to create a custom route table, add a rule to send internet-bound traffic to the gateway, and link this table exclusively to our public subnet.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># 1. Create a new, custom route table for the VPC</span>
+</span></span><span class="line"><span class="cl">aws ec2 create-route-table <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --vpc-id <span class="nv">$VPC_ID</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 2. Store the route table id to an environment table</span>
+</span></span><span class="line"><span class="cl"><span class="nv">ROUTE_TABLE_ID</span><span class="o">=</span>YOUR_ROUTE_TABLE_ID
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 3. Add a route pointing all outside traffic (0.0.0.0/0) to the Internet Gateway</span>
+</span></span><span class="line"><span class="cl">aws ec2 create-route <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --route-table-id <span class="nv">$ROUTE_TABLE_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --destination-cidr-block 0.0.0.0/0 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --gateway-id <span class="nv">$IGW_ID</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 4. Associate this new route table explicitly with the Public Subnet</span>
+</span></span><span class="line"><span class="cl">aws ec2 associate-route-table <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --subnet-id <span class="nv">$PUBLIC_SUBNET_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --route-table-id <span class="nv">$ROUTE_TABLE_ID</span>
+</span></span></code></pre></div><p><em>(We leave the private subnet alone. It will rely on the VPC&rsquo;s hidden default route table, which only permits local internal traffic).</em></p>
+<h3 id="step-5-create-a-key-pair-for-ssh-access">
+  Step 5: Create a Key Pair for SSH Access
+  <a class="heading-link" href="#step-5-create-a-key-pair-for-ssh-access">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>To log into our servers later, we need a cryptographic key pair. This command creates the key in AWS and saves the private key locally as a <code>.pem</code> file on your computer.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Create the key pair and output the private key material to a local file</span>
+</span></span><span class="line"><span class="cl">aws ec2 create-key-pair <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --key-name MyAWSKey <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --query <span class="s1">&#39;KeyMaterial&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --output text &gt; MyAWSKey.pem
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Note: If you are on Mac or Linux, you must secure the file permissions</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># so SSH allows you to use it. Run this command:</span>
+</span></span><span class="line"><span class="cl">chmod <span class="m">400</span> MyAWSKey.pem
+</span></span></code></pre></div><h3 id="step-6-security-groups">
+  Step 6: Security Groups
+  <a class="heading-link" href="#step-6-security-groups">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>We need a virtual firewall (Security Group) for our servers. First, we create the group, then we add two rules: one allowing SSH access so we can log in, and one allowing ICMP (Ping) traffic from inside the VPC so our servers can talk to each other.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># 1. Create the Security Group</span>
+</span></span><span class="line"><span class="cl">aws ec2 create-security-group <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --group-name MySecurityGroup <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --description <span class="s2">&#34;Allow SSH and Ping&#34;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --vpc-id <span class="nv">$VPC_ID</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 2. Store the Security Group ID in an environment variable</span>
+</span></span><span class="line"><span class="cl"><span class="nv">SG_ID</span><span class="o">=</span>YOUR_SG_ID
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 3. Allow inbound SSH (Port 22) from anywhere (0.0.0.0/0)</span>
+</span></span><span class="line"><span class="cl">aws ec2 authorize-security-group-ingress <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --group-id <span class="nv">$SG_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --protocol tcp <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --port <span class="m">22</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --cidr 0.0.0.0/0
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 4. Allow inbound ICMP (Ping) traffic only from within the VPC network (10.0.0.0/16)</span>
+</span></span><span class="line"><span class="cl">aws ec2 authorize-security-group-ingress <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --group-id <span class="nv">$SG_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --protocol icmp <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --port -1 <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --cidr 10.0.0.0/16
+</span></span></code></pre></div><h3 id="step-7-launch-ec2-instances">
+  Step 7: Launch EC2 Instances
+  <a class="heading-link" href="#step-7-launch-ec2-instances">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Now, let&rsquo;s deploy a server into each subnet! <em>(Note: You will need an Amazon Linux AMI ID for your specific region. You can easily find the free tier Amazon Linux 2023 AMI ID in the AWS Console on EC2 &gt; AMI Catalog).</em></p>
+<p>First, we deploy our internet-facing Amazon Linux 2023 (<code>ami-06067086cf86c58e6</code> for my account, yours may vary) web server into the public subnet, attaching the key pair and security group we just created.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Launch the Web Server into the PUBLIC subnet</span>
+</span></span><span class="line"><span class="cl">aws ec2 run-instances <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --image-id YOUR_AMI_ID <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --count <span class="m">1</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --instance-type t2.micro <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --key-name MyAWSKey <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --security-group-ids <span class="nv">$SG_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --subnet-id <span class="nv">$PUBLIC_SUBNET_ID</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Store the instance ID</span>
+</span></span><span class="line"><span class="cl"><span class="nv">PUBLIC_INSTANCE_ID</span><span class="o">=</span>YOUR_PUBLIC_INSTANCE_ID
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Get the public IP address of the web server</span>
+</span></span><span class="line"><span class="cl">aws ec2 describe-instances <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --instance-ids <span class="nv">$PUBLIC_INSTANCE_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --query <span class="s1">&#39;Reservations[0].Instances[0].PublicIpAddress&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --output text
+</span></span></code></pre></div><p>Next, we deploy our backend database server into the isolated private subnet.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Launch the Database Server into the PRIVATE subnet</span>
+</span></span><span class="line"><span class="cl">aws ec2 run-instances <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --image-id YOUR_AMI_ID <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --count <span class="m">1</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --instance-type t2.micro <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --key-name MyAWSKey <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --security-group-ids <span class="nv">$SG_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --subnet-id <span class="nv">$PRIVATE_SUBNET_ID</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nv">PRIVATE_INSTANCE_ID</span><span class="o">=</span>YOUR_PRIVATE_INSTANCE_ID
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Get the private IP address of the web server</span>
+</span></span><span class="line"><span class="cl">aws ec2 describe-instances <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --instance-ids <span class="nv">$PRIVATE_INSTANCE_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --query <span class="s1">&#39;Reservations[0].Instances[0].PrivateIpAddress&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --output text
+</span></span></code></pre></div><h3 id="step-8-the-ping-test">
+  Step 8: The &ldquo;Ping&rdquo; Test
+  <a class="heading-link" href="#step-8-the-ping-test">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>It&rsquo;s time for the &ldquo;Aha!&rdquo; moment.</p>
+<ol>
+<li>
+<p>Open your terminal, locate your <code>MyAWSKey.pem</code> file, and use SSH to log into your Public Web Server using its public IP address:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">ssh -i MyAWSKey.pem ec2-user@YOUR_PUBLIC_IP
+</span></span></code></pre></div></li>
+<li>
+<p>Once securely inside the public server, ping the <em>private</em> IP address of your Database Server (e.g., <code>ping 10.0.2.x</code>).</p>
+</li>
+</ol>
+<p><strong>Success!</strong> The ping works because both servers live inside the same VPC and can talk to each other locally. However, if you try to ping the private server directly from your laptop at home, it will fail. It has no public IP and no route to the outside world. It is completely safe!</p>
+<p>Cancel the ping command with Ctrl+C and then logout the server with Ctrl+D (or the equivalent on Mac).</p>
+<h2 id="moving-to-production-what-we-left-out">
+  Moving to Production: What We Left Out
+  <a class="heading-link" href="#moving-to-production-what-we-left-out">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>The lab we just built is a fantastic learning tool, but it is <strong>not</strong> ready for a real-world, production application. If you were deploying a real app for a company, you would need to add a few critical things:</p>
+<ul>
+<li><strong>High Availability (Multi-AZ):</strong> We placed all our servers in a single Availability Zone (us-east-1a). If that physical data center has a power outage, our app goes down. In production, you <em>always</em> spread your subnets and servers across at least two different AZs.</li>
+<li><strong>Strict Security:</strong> In Step 6, we opened SSH (Port 22) to the entire world (0.0.0.0/0). Never do this in production! You should restrict access to your company&rsquo;s specific IP address, or better yet, use AWS Systems Manager (SSM) which allows secure remote access without opening any inbound ports at all.</li>
+<li><strong>NAT Gateways:</strong> Our private database server is completely cut off from the internet. If it needs to download a vital Linux security patch, it can&rsquo;t. Production environments use NAT Gateways to allow private instances to reach out to the internet for updates while keeping them hidden from incoming internet traffic.</li>
+<li><strong>Application Load Balancers (ALB):</strong> Instead of users connecting directly to a single web server&rsquo;s public IP address, production apps use Load Balancers. The Load Balancer sits in the public subnet, accepts incoming traffic, and evenly distributes it to dozens of private web servers hidden safely behind it.</li>
+</ul>
+<h2 id="clean-up-deleting-your-resources">
+  Clean Up: Deleting Your Resources
+  <a class="heading-link" href="#clean-up-deleting-your-resources">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>In the cloud, you pay for what you provision. Leaving things running when you are done learning is a quick way to get a surprise bill.</p>
+<p>You can&rsquo;t just delete a VPC; you have to delete the things inside it first to avoid dependency errors. Run these commands in this exact order to safely tear down your lab:</p>
+<p><strong>1. Terminate the EC2 Instances:</strong> This stops and deletes your virtual servers.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">aws ec2 terminate-instances --instance-ids <span class="nv">$PUBLIC_INSTANCE_ID</span> <span class="nv">$PRIVATE_INSTANCE_ID</span>
+</span></span></code></pre></div><p><em>(Wait a few minutes for them to fully shut down before proceeding).</em></p>
+<p><strong>2. Delete Security Group:</strong> Removes your virtual firewall rules.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">aws ec2 delete-security-group --group-id <span class="nv">$SG_ID</span>
+</span></span></code></pre></div><p><strong>3. Delete Subnets:</strong> Removes your public and private network boundaries.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Delete both the public and private subnet IDs</span>
+</span></span><span class="line"><span class="cl">aws ec2 delete-subnet --subnet-id <span class="nv">$PUBLIC_SUBNET_ID</span>
+</span></span><span class="line"><span class="cl">aws ec2 delete-subnet --subnet-id <span class="nv">$PRIVATE_SUBNET_ID</span>
+</span></span></code></pre></div><p><strong>4. Detach Internet Gateway:</strong> Unplugs the gateway from your VPC.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">aws ec2 detach-internet-gateway <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --internet-gateway-id <span class="nv">$IGW_ID</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --vpc-id <span class="nv">$VPC_ID</span>
+</span></span></code></pre></div><p><strong>5. Delete Internet Gateway:</strong> Destroys the gateway resource.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">aws ec2 delete-internet-gateway --internet-gateway-id <span class="nv">$IGW_ID</span>
+</span></span></code></pre></div><p><strong>6. Delete Route Table:</strong> Removes your custom routing rules.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">aws ec2 delete-route-table --route-table-id <span class="nv">$ROUTE_TABLE_ID</span>
+</span></span></code></pre></div><p><strong>7. Delete the VPC:</strong> Delete the empty virtual private cloud itself.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">aws ec2 delete-vpc --vpc-id <span class="nv">$VPC_ID</span>
+</span></span></code></pre></div><p><strong>8. Delete the Key Pair:</strong> Finally, remove the public key from AWS and delete your local file.</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">aws ec2 delete-key-pair --key-name MyAWSKey
+</span></span><span class="line"><span class="cl">rm MyAWSKey.pem
+</span></span></code></pre></div><h2 id="conclusion">
+  Conclusion
+  <a class="heading-link" href="#conclusion">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Congratulations! You just went from learning about massive physical data centers down to creating your very own logically isolated network in the cloud. You learned how to route public traffic, secure private traffic, and verify access using SSH keys.</p>
+<p>Now that you have the basics down, you&rsquo;re well on your way to mastering cloud architecture!</p>
+<p><em>Interested on launching your app to production on AWS? <a href="mailto:hello@hectorzelaya.dev" >Let&rsquo;s talk</a></em></p>
+
+      </div>
+
+
+      <footer>
+        
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2015 -
+    
+    2026
+     Hector Zelaya 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.min.6ae284be93d2d19dad1f02b0039508d9aab3180a12a06dcc71b0b0ef7825a317.js" integrity="sha256-auKEvpPS0Z2tHwKwA5UI2aqzGAoSoG3McbCw73gloxc="></script>
+  
+
+  
+
+  
+
+
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-DM273NM2FB"></script>
+      <script>
+        var doNotTrack = false;
+        if ( true ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-DM273NM2FB');
+        }
+      </script>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+
+</html>
