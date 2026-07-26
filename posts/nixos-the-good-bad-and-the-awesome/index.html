@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>
+  NixOS: The Good, The Bad, and The Awesome · HectorZelaya.dev
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Hector Zelaya">
+<meta name="description" content="If you&rsquo;ve used Linux for any meaningful amount of time, you&rsquo;ve probably distro-hopped at least once. Maybe twice. Maybe you lost count. Each distribution promises a slightly better experience — faster updates, more stability, better hardware support — but under the hood, most of them share the same fundamental approach: install packages imperatively, mutate the filesystem in place, and hope things don&rsquo;t break on the next upgrade.
+I&rsquo;ve been running NixOS as my daily driver for a while now, and I can confidently say it&rsquo;s unlike anything else in the Linux world. It solves real problems that no other distro even attempts to address, but it also introduces new friction that can be genuinely frustrating. This post is my honest take on the experience — what&rsquo;s good, what&rsquo;s bad, and why I still think it&rsquo;s awesome.">
+<meta name="keywords" content="blog,webrtc,developer advocate,aws,nixos,linux,real-time communications">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="NixOS: The Good, The Bad, and The Awesome">
+  <meta name="twitter:description" content="If you’ve used Linux for any meaningful amount of time, you’ve probably distro-hopped at least once. Maybe twice. Maybe you lost count. Each distribution promises a slightly better experience — faster updates, more stability, better hardware support — but under the hood, most of them share the same fundamental approach: install packages imperatively, mutate the filesystem in place, and hope things don’t break on the next upgrade.
+I’ve been running NixOS as my daily driver for a while now, and I can confidently say it’s unlike anything else in the Linux world. It solves real problems that no other distro even attempts to address, but it also introduces new friction that can be genuinely frustrating. This post is my honest take on the experience — what’s good, what’s bad, and why I still think it’s awesome.">
+
+<meta property="og:url" content="https://www.hectorzelaya.dev/posts/nixos-the-good-bad-and-the-awesome/">
+  <meta property="og:site_name" content="HectorZelaya.dev">
+  <meta property="og:title" content="NixOS: The Good, The Bad, and The Awesome">
+  <meta property="og:description" content="If you’ve used Linux for any meaningful amount of time, you’ve probably distro-hopped at least once. Maybe twice. Maybe you lost count. Each distribution promises a slightly better experience — faster updates, more stability, better hardware support — but under the hood, most of them share the same fundamental approach: install packages imperatively, mutate the filesystem in place, and hope things don’t break on the next upgrade.
+I’ve been running NixOS as my daily driver for a while now, and I can confidently say it’s unlike anything else in the Linux world. It solves real problems that no other distro even attempts to address, but it also introduces new friction that can be genuinely frustrating. This post is my honest take on the experience — what’s good, what’s bad, and why I still think it’s awesome.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-07-26T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-07-26T00:00:00+00:00">
+    <meta property="article:tag" content="Linux">
+    <meta property="article:tag" content="Nixos">
+    <meta property="article:tag" content="Devops">
+
+
+
+
+<link rel="canonical" href="https://www.hectorzelaya.dev/posts/nixos-the-good-bad-and-the-awesome/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.min.f8ac2fdd0cb7e56145845d949b5c036d40cd5061c013fd446f2f54a63ade62e8.css" integrity="sha256-&#43;Kwv3Qy35WFFhF2Um1wDbUDNUGHAE/1Eby9UpjreYug=" crossorigin="anonymous" media="screen" />
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.min.ad48f476275974885bdc03d5251e3cdbe1678c54a63ff772376b0ed2adc468dd.css" integrity="sha256-rUj0didZdIhb3APVJR482&#43;FnjFSmP/dyN2sO0q3EaN0=" crossorigin="anonymous" media="screen" />
+  
+
+
+
+ 
+
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="https://www.hectorzelaya.dev/">
+      HectorZelaya.dev
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about/">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/music/">Music</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="https://www.hectorzelaya.dev/posts/nixos-the-good-bad-and-the-awesome/">
+              NixOS: The Good, The Bad, and The Awesome
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2026-07-26T00:00:00Z">
+                July 26, 2026
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              7-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/hector-zelaya/">Hector Zelaya</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/linux/">Linux</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/nixos/">Nixos</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/devops/">Devops</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <p>If you&rsquo;ve used Linux for any meaningful amount of time, you&rsquo;ve probably distro-hopped at least once. Maybe twice. Maybe you lost count. Each distribution promises a slightly better experience — faster updates, more stability, better hardware support — but under the hood, most of them share the same fundamental approach: install packages imperatively, mutate the filesystem in place, and hope things don&rsquo;t break on the next upgrade.</p>
+<p>I&rsquo;ve been running <a href="https://nixos.org/"  class="external-link" target="_blank" rel="noopener">NixOS</a> as my daily driver for a while now, and I can confidently say it&rsquo;s unlike anything else in the Linux world. It solves real problems that no other distro even attempts to address, but it also introduces new friction that can be genuinely frustrating. This post is my honest take on the experience — what&rsquo;s good, what&rsquo;s bad, and why I still think it&rsquo;s awesome.</p>
+<h2 id="the-linux-landscape">
+  The Linux Landscape
+  <a class="heading-link" href="#the-linux-landscape">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Before we talk about NixOS, let&rsquo;s zoom out. The Linux desktop ecosystem roughly breaks down into a few families:</p>
+<ul>
+<li><strong>Debian-based</strong> (<a href="https://ubuntu.com/"  class="external-link" target="_blank" rel="noopener">Ubuntu</a>, <a href="https://linuxmint.com/"  class="external-link" target="_blank" rel="noopener">Mint</a>, <a href="https://pop.system76.com/"  class="external-link" target="_blank" rel="noopener">Pop!_OS</a>) — The safe bet. Massive community, <code>.deb</code> packages, stable but sometimes stale.</li>
+<li><strong>RPM-based</strong> (<a href="https://fedoraproject.org/"  class="external-link" target="_blank" rel="noopener">Fedora</a>, <a href="https://www.opensuse.org/"  class="external-link" target="_blank" rel="noopener">OpenSUSE</a>) — More cutting-edge than Debian, solid enterprise backing, strong defaults.</li>
+<li><strong>Arch-based</strong> (<a href="https://archlinux.org/"  class="external-link" target="_blank" rel="noopener">Arch</a>, <a href="https://endeavouros.com/"  class="external-link" target="_blank" rel="noopener">EndeavourOS</a>, <a href="https://manjaro.org/"  class="external-link" target="_blank" rel="noopener">Manjaro</a>) — Rolling release, bleeding edge, you build your own experience.</li>
+</ul>
+<p>This isn&rsquo;t an exhaustive classification. There are other long-standing distros like <strong><a href="https://www.gentoo.org/"  class="external-link" target="_blank" rel="noopener">Gentoo</a></strong> (compile everything from source, maximum control) and <strong><a href="http://www.slackware.com/"  class="external-link" target="_blank" rel="noopener">Slackware</a></strong> (one of the oldest, deliberately minimal and Unix-pure) that don&rsquo;t fit neatly into these families. They&rsquo;re excellent systems with loyal communities, but they occupy a niche that keeps them off most people&rsquo;s radar.</p>
+<p>Then there&rsquo;s the newer wave of distros that build on top of the mainstream families:</p>
+<ul>
+<li><strong><a href="https://cachyos.org/"  class="external-link" target="_blank" rel="noopener">CachyOS</a></strong> — Arch-based with performance-tuned kernels and scheduler optimizations.</li>
+<li><strong><a href="https://bazzite.gg/"  class="external-link" target="_blank" rel="noopener">Bazzite</a></strong> — Built on Fedora&rsquo;s atomic/immutable image system, targeting gaming and desktop use.</li>
+</ul>
+<p>This newer wave reflects a growing trend: <strong>immutable operating systems</strong>. The idea is that the OS layer should be read-only and atomically updated, reducing the risk of a broken system. <a href="https://fedoraproject.org/atomic-desktops/silverblue/"  class="external-link" target="_blank" rel="noopener">Fedora Silverblue</a>, <a href="https://microos.opensuse.org/"  class="external-link" target="_blank" rel="noopener">OpenSUSE MicroOS</a>, and <a href="https://vanillaos.org/"  class="external-link" target="_blank" rel="noopener">Vanilla OS</a> all follow this model to varying degrees.</p>
+<p>But NixOS? It sits in its own category entirely.</p>
+<h2 id="how-nixos-is-different">
+  How NixOS is Different
+  <a class="heading-link" href="#how-nixos-is-different">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>NixOS doesn&rsquo;t just layer immutability on top of a traditional Linux base. It rebuilds the entire concept of system management from the ground up using functional package management.</p>
+<p>Here&rsquo;s the core idea: every package, every dependency, every configuration lives in <code>/nix/store</code>, identified by a cryptographic hash of its inputs. Nothing is ever modified in place. When you change your system configuration and rebuild, NixOS creates a new <strong>generation</strong> — a complete, self-contained snapshot of your system state. The old generation remains untouched.</p>
+<p>Your entire system is defined declaratively in a configuration file (or a set of <a href="https://nixos.wiki/wiki/Flakes"  class="external-link" target="_blank" rel="noopener">flakes</a>). Want to install a package? Add it to the config. Want to enable a service? Declare it. Want to change a kernel parameter? It&rsquo;s one line. Then you run <code>nixos-rebuild switch</code> and the system converges to the state you described.</p>
+<p>This has a few powerful implications:</p>
+<ul>
+<li><strong>Reproducibility</strong> — Your config file <em>is</em> your system. Copy it to another machine, rebuild, and you get an identical setup.</li>
+<li><strong>Atomic upgrades</strong> — Either the entire rebuild succeeds or nothing changes. No half-applied updates.</li>
+<li><strong>Rollback</strong> — Every generation is bootable. Messed something up? Reboot into the previous generation from the bootloader. Done.</li>
+</ul>
+<p>It&rsquo;s not just immutable in the way Silverblue is immutable. It&rsquo;s <strong>declarative</strong> and <strong>reproducible</strong> in a way nothing else achieves.</p>
+<h2 id="the-good">
+  The Good
+  <a class="heading-link" href="#the-good">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<h3 id="a-centralized-version-controlled-system">
+  A Centralized, Version-Controlled System
+  <a class="heading-link" href="#a-centralized-version-controlled-system">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>This is the killer feature. My entire system configuration lives in a git repository. Hardware config, installed packages, enabled services, firewall rules, user accounts, shell configuration — all of it. Declarative. Diffable. Reviewable.</p>
+<p>When I set up a new machine, I clone the repo, run <code>nixos-rebuild</code>, and within minutes I have my exact environment. No more maintaining dotfile scripts that break across distros. No more &ldquo;I forgot I installed that thing manually three months ago.&rdquo; Everything is accounted for.</p>
+<h3 id="access-to-a-massive-cutting-edge-package-repository">
+  Access to a Massive, Cutting-Edge Package Repository
+  <a class="heading-link" href="#access-to-a-massive-cutting-edge-package-repository">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p><a href="https://github.com/NixOS/nixpkgs"  class="external-link" target="_blank" rel="noopener">Nixpkgs</a> is one of the largest package repositories in existence, with over 120,000 packages. And because it&rsquo;s community-driven with a rapid contribution cycle, packages are often more up to date than what you&rsquo;d find in Fedora or even the AUR.</p>
+<p>Need the latest version of some niche developer tool? It&rsquo;s probably already packaged. And if it&rsquo;s not, the Nix language makes it straightforward to package it yourself without polluting your system.</p>
+<h3 id="a-resilient-system-you-can-trust">
+  A Resilient System You Can Trust
+  <a class="heading-link" href="#a-resilient-system-you-can-trust">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>I&rsquo;ve broken my system configuration more times than I&rsquo;d like to admit. On any other distro, that usually mean a recovery USB and a fresh install. On NixOS, it means rebooting and selecting the previous generation from the GRUB menu. Thirty seconds and I&rsquo;m back to a working system.</p>
+<p>This safety net changes how you interact with your OS. You experiment more freely because the cost of failure is near zero.</p>
+<h2 id="the-bad">
+  The Bad
+  <a class="heading-link" href="#the-bad">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<h3 id="the-storage-tax-is-real">
+  The Storage Tax is Real
+  <a class="heading-link" href="#the-storage-tax-is-real">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>Here&rsquo;s the uncomfortable truth: <code>/nix/store</code> is hungry. Even a minor dependency bump produces an entirely new store path, so over time distinct but overlapping closures accumulate and disk usage adds up fast. Community members regularly report their store growing to 50-100GB, and even with <a href="https://nixos.wiki/wiki/Storage_optimization"  class="external-link" target="_blank" rel="noopener">garbage collection</a> (<code>nix-collect-garbage -d</code>) and store optimization (<code>nix store optimise</code>), a typical NixOS system with development tooling will comfortably sit at 40-70GB just for the store.</p>
+<p>On my 512GB NVMe — where I also keep projects, music production files, and container images — this is a constant balancing act. You learn to run garbage collection regularly and keep old generations pruned. It&rsquo;s manageable, but it&rsquo;s a tax you don&rsquo;t pay on a traditional distro.</p>
+<p>With current SSD prices, this isn&rsquo;t a dealbreaker if you plan for it. But on a laptop with a smaller drive, it can catch you off guard.</p>
+<h3 id="rebuilds-take-forever">
+  Rebuilds Take Forever
+  <a class="heading-link" href="#rebuilds-take-forever">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>When you run <code>nixos-rebuild switch</code>, the system evaluates your entire configuration, fetches or builds any missing packages, and assembles a new generation. For minor changes, this usually takes seconds. But a full system update? Especially on <code>nixos-unstable</code> where hundreds of packages might have new versions? You&rsquo;re looking at 40-60 minutes of downloading and linking. Sometimes more.</p>
+<p>This isn&rsquo;t like <code>apt upgrade</code> where packages are swapped in place. NixOS is doing something fundamentally more thorough — and that thoroughness costs time. You learn to batch your changes and update less frequently, or you invest in a binary cache. But that initial &ldquo;why is this taking so long&rdquo; frustration is real.</p>
+<h3 id="the-learning-curve">
+  The Learning Curve
+  <a class="heading-link" href="#the-learning-curve">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>I didn&rsquo;t list this in my initial notes, but it deserves mention. The <a href="https://nix.dev/manual/nix/latest/language/"  class="external-link" target="_blank" rel="noopener">Nix language</a> is its own thing. It&rsquo;s not Bash, it&rsquo;s not YAML, it&rsquo;s not TOML. It&rsquo;s a lazy, purely functional language with its own quirks. Module options are powerful but sometimes cryptic. Error messages can be unhelpful. And finding the right way to do something often means reading source code in nixpkgs rather than a friendly wiki page.</p>
+<p>You will spend time learning. That&rsquo;s the investment. That said, an AI coding agent like <a href="https://kiro.dev/"  class="external-link" target="_blank" rel="noopener">Kiro</a> can soften the curve considerably — asking it to explain a module option, generate a flake template, or debug a cryptic evaluation error gets you unstuck faster than digging through source code alone.</p>
+<h2 id="the-awesome">
+  The Awesome
+  <a class="heading-link" href="#the-awesome">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Despite the storage overhead and the rebuild times, NixOS gives me something no other distribution can: <strong>complete confidence in my system&rsquo;s state</strong>. I know exactly what&rsquo;s installed. I know exactly what&rsquo;s configured. I can reproduce it on any machine. And if anything goes wrong, I can roll back in seconds.</p>
+<p>It&rsquo;s the closest thing to infrastructure-as-code for your personal machine. And once you&rsquo;ve experienced that level of control, going back to a traditional mutable distro feels like editing production servers by hand.</p>
+<p>Would I recommend NixOS to everyone? Absolutely not. If you&rsquo;re used to how traditional Linux works — <code>apt install</code>, editing config files in <code>/etc</code>, expecting the filesystem to behave like every other Unix — NixOS will fight you at every turn. It asks you to unlearn decades of conventions and adopt a completely different mental model.</p>
+<p>But if you value reproducibility, if you manage multiple machines, or if you simply want your OS to be as version-controlled as your code — NixOS isn&rsquo;t just good. It&rsquo;s awesome.</p>
+<p>Interested on taking advantage of the Linux OS for your project? <a href="mailto:hello@hectorzelaya.dev" >Let&rsquo;s talk</a>!</p>
+
+      </div>
+
+
+      <footer>
+        
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2015 -
+    
+    2026
+     Hector Zelaya 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+
+  
+  
+  <script src="/js/coder.min.6ae284be93d2d19dad1f02b0039508d9aab3180a12a06dcc71b0b0ef7825a317.js" integrity="sha256-auKEvpPS0Z2tHwKwA5UI2aqzGAoSoG3McbCw73gloxc="></script>
+  
+
+  
+
+  
+
+
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-DM273NM2FB"></script>
+      <script>
+        var doNotTrack = false;
+        if ( true ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-DM273NM2FB');
+        }
+      </script>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+
+</html>

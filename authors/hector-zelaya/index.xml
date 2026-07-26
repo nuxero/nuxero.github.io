@@ -6,8 +6,15 @@
     <description>Recent content in Hector Zelaya on HectorZelaya.dev</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 05 Jul 2026 15:49:00 -0600</lastBuildDate>
+    <lastBuildDate>Sun, 26 Jul 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://www.hectorzelaya.dev/authors/hector-zelaya/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>NixOS: The Good, The Bad, and The Awesome</title>
+      <link>https://www.hectorzelaya.dev/posts/nixos-the-good-bad-and-the-awesome/</link>
+      <pubDate>Sun, 26 Jul 2026 00:00:00 +0000</pubDate>
+      <guid>https://www.hectorzelaya.dev/posts/nixos-the-good-bad-and-the-awesome/</guid>
+      <description>&lt;p&gt;If you&amp;rsquo;ve used Linux for any meaningful amount of time, you&amp;rsquo;ve probably distro-hopped at least once. Maybe twice. Maybe you lost count. Each distribution promises a slightly better experience — faster updates, more stability, better hardware support — but under the hood, most of them share the same fundamental approach: install packages imperatively, mutate the filesystem in place, and hope things don&amp;rsquo;t break on the next upgrade.&lt;/p&gt;&#xA;&lt;p&gt;I&amp;rsquo;ve been running &lt;a href=&#34;https://nixos.org/&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;NixOS&lt;/a&gt; as my daily driver for a while now, and I can confidently say it&amp;rsquo;s unlike anything else in the Linux world. It solves real problems that no other distro even attempts to address, but it also introduces new friction that can be genuinely frustrating. This post is my honest take on the experience — what&amp;rsquo;s good, what&amp;rsquo;s bad, and why I still think it&amp;rsquo;s awesome.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Demystifying AWS Networking: From Cloud Basics to Building Your First VPC</title>
       <link>https://www.hectorzelaya.dev/posts/aws/aws-networking-explained/</link>

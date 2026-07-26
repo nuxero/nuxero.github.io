@@ -3,7 +3,31 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://www.hectorzelaya.dev/authors/</loc>
-    <lastmod>2026-07-05T15:49:00-06:00</lastmod>
+    <lastmod>2026-07-26T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://www.hectorzelaya.dev/tags/devops/</loc>
+    <lastmod>2026-07-26T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://www.hectorzelaya.dev/authors/hector-zelaya/</loc>
+    <lastmod>2026-07-26T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://www.hectorzelaya.dev/</loc>
+    <lastmod>2026-07-26T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://www.hectorzelaya.dev/tags/linux/</loc>
+    <lastmod>2026-07-26T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://www.hectorzelaya.dev/tags/nixos/</loc>
+    <lastmod>2026-07-26T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://www.hectorzelaya.dev/posts/nixos-the-good-bad-and-the-awesome/</loc>
+    <lastmod>2026-07-26T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://www.hectorzelaya.dev/posts/</loc>
+    <lastmod>2026-07-26T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://www.hectorzelaya.dev/tags/</loc>
+    <lastmod>2026-07-26T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://www.hectorzelaya.dev/tags/aws/</loc>
     <lastmod>2026-07-05T15:49:00-06:00</lastmod>
@@ -14,19 +38,7 @@
     <loc>https://www.hectorzelaya.dev/posts/aws/aws-networking-explained/</loc>
     <lastmod>2026-07-05T15:49:00-06:00</lastmod>
   </url><url>
-    <loc>https://www.hectorzelaya.dev/authors/hector-zelaya/</loc>
-    <lastmod>2026-07-05T15:49:00-06:00</lastmod>
-  </url><url>
-    <loc>https://www.hectorzelaya.dev/</loc>
-    <lastmod>2026-07-05T15:49:00-06:00</lastmod>
-  </url><url>
     <loc>https://www.hectorzelaya.dev/tags/networking/</loc>
-    <lastmod>2026-07-05T15:49:00-06:00</lastmod>
-  </url><url>
-    <loc>https://www.hectorzelaya.dev/posts/</loc>
-    <lastmod>2026-07-05T15:49:00-06:00</lastmod>
-  </url><url>
-    <loc>https://www.hectorzelaya.dev/tags/</loc>
     <lastmod>2026-07-05T15:49:00-06:00</lastmod>
   </url><url>
     <loc>https://www.hectorzelaya.dev/tags/tutorial/</loc>
