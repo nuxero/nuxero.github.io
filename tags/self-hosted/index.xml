@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Aws on HectorZelaya.dev</title>
-    <link>https://www.hectorzelaya.dev/tags/aws/</link>
-    <description>Recent content in Aws on HectorZelaya.dev</description>
+    <title>Self-Hosted on HectorZelaya.dev</title>
+    <link>https://www.hectorzelaya.dev/tags/self-hosted/</link>
+    <description>Recent content in Self-Hosted on HectorZelaya.dev</description>
     <generator>Hugo</generator>
     <language>en</language>
     <lastBuildDate>Sat, 01 Aug 2026 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://www.hectorzelaya.dev/tags/aws/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://www.hectorzelaya.dev/tags/self-hosted/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Personal Cloud Storage with WebDAV, S3, and NixOS on EC2</title>
       <link>https://www.hectorzelaya.dev/posts/personal-cloud-storage-webdav-s3-nixos/</link>
       <pubDate>Sat, 01 Aug 2026 00:00:00 +0000</pubDate>
       <guid>https://www.hectorzelaya.dev/posts/personal-cloud-storage-webdav-s3-nixos/</guid>
       <description>&lt;p&gt;As a lifelong gamer, I play across several devices — handheld, phone, desktop. &lt;a href=&#34;https://www.retroarch.com/&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;RetroArch&lt;/a&gt; can sync saves between them, but it requires a &lt;a href=&#34;https://en.wikipedia.org/wiki/WebDAV&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;WebDAV&lt;/a&gt; server.&lt;/p&gt;&#xA;&lt;p&gt;That constraint gave me an excuse to build something I&amp;rsquo;d been wanting anyway: a single storage endpoint I fully control, backed by S3, managed declaratively with NixOS. Once the WebDAV server existed for game saves, expanding it to handle &lt;a href=&#34;https://www.hectorzelaya.dev/music/&#34; &gt;music production&lt;/a&gt; stems, database backups, and photos was just a matter of adding path prefixes.&lt;/p&gt;</description>
-    </item>
-    <item>
-      <title>Demystifying AWS Networking: From Cloud Basics to Building Your First VPC</title>
-      <link>https://www.hectorzelaya.dev/posts/aws/aws-networking-explained/</link>
-      <pubDate>Sun, 05 Jul 2026 15:49:00 -0600</pubDate>
-      <guid>https://www.hectorzelaya.dev/posts/aws/aws-networking-explained/</guid>
-      <description>&lt;p&gt;Networking is the foundation of everything you build in the cloud. Before you can run a web server, store a file, or host a database, you need a place for it to live and a way for it to communicate.&lt;/p&gt;&#xA;&lt;p&gt;In this post, we are going to break down the physical reality of the cloud, explain the core concepts of AWS networking in plain English, and finally, build a working network from scratch using the AWS Command Line Interface (CLI).&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>
+  Personal Cloud Storage with WebDAV, S3, and NixOS on EC2 · HectorZelaya.dev
+</title>
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+
+
+
+
+<meta name="author" content="Hector Zelaya">
+<meta name="description" content="As a lifelong gamer, I play across several devices — handheld, phone, desktop. RetroArch can sync saves between them, but it requires a WebDAV server.
+That constraint gave me an excuse to build something I&rsquo;d been wanting anyway: a single storage endpoint I fully control, backed by S3, managed declaratively with NixOS. Once the WebDAV server existed for game saves, expanding it to handle music production stems, database backups, and photos was just a matter of adding path prefixes.">
+<meta name="keywords" content="blog,webrtc,developer advocate,aws,nixos,linux,real-time communications">
+
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Personal Cloud Storage with WebDAV, S3, and NixOS on EC2">
+  <meta name="twitter:description" content="As a lifelong gamer, I play across several devices — handheld, phone, desktop. RetroArch can sync saves between them, but it requires a WebDAV server.
+That constraint gave me an excuse to build something I’d been wanting anyway: a single storage endpoint I fully control, backed by S3, managed declaratively with NixOS. Once the WebDAV server existed for game saves, expanding it to handle music production stems, database backups, and photos was just a matter of adding path prefixes.">
+
+<meta property="og:url" content="https://www.hectorzelaya.dev/posts/personal-cloud-storage-webdav-s3-nixos/">
+  <meta property="og:site_name" content="HectorZelaya.dev">
+  <meta property="og:title" content="Personal Cloud Storage with WebDAV, S3, and NixOS on EC2">
+  <meta property="og:description" content="As a lifelong gamer, I play across several devices — handheld, phone, desktop. RetroArch can sync saves between them, but it requires a WebDAV server.
+That constraint gave me an excuse to build something I’d been wanting anyway: a single storage endpoint I fully control, backed by S3, managed declaratively with NixOS. Once the WebDAV server existed for game saves, expanding it to handle music production stems, database backups, and photos was just a matter of adding path prefixes.">
+  <meta property="og:locale" content="en">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-08-01T00:00:00+00:00">
+    <meta property="article:modified_time" content="2026-08-01T00:00:00+00:00">
+    <meta property="article:tag" content="Aws">
+    <meta property="article:tag" content="Nixos">
+    <meta property="article:tag" content="Devops">
+    <meta property="article:tag" content="Self-Hosted">
+
+
+
+
+<link rel="canonical" href="https://www.hectorzelaya.dev/posts/personal-cloud-storage-webdav-s3-nixos/">
+
+
+<link rel="preload" href="/fonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-regular-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+
+  
+  
+  <link rel="stylesheet" href="/css/coder.min.f8ac2fdd0cb7e56145845d949b5c036d40cd5061c013fd446f2f54a63ade62e8.css" integrity="sha256-&#43;Kwv3Qy35WFFhF2Um1wDbUDNUGHAE/1Eby9UpjreYug=" crossorigin="anonymous" media="screen" />
+
+
+
+
+
+
+  
+    
+    
+    <link rel="stylesheet" href="/css/coder-dark.min.ad48f476275974885bdc03d5251e3cdbe1678c54a63ff772376b0ed2adc468dd.css" integrity="sha256-rUj0didZdIhb3APVJR482&#43;FnjFSmP/dyN2sO0q3EaN0=" crossorigin="anonymous" media="screen" />
+  
+
+
+
+ 
+
+
+
+
+<link rel="icon" type="image/svg+xml" href="/images/favicon.svg" sizes="any">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+<link rel="manifest" href="/site.webmanifest">
+<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+
+
+
+
+
+
+</head>
+
+
+
+
+
+
+<body class="preload-transitions colorscheme-auto">
+  
+<div class="float-container">
+    <a id="dark-mode-toggle" class="colorscheme-toggle">
+        <i class="fa-solid fa-adjust fa-fw" aria-hidden="true"></i>
+    </a>
+</div>
+
+
+  <main class="wrapper">
+    <nav class="navigation">
+  <section class="container">
+    
+    <a class="navigation-title" href="https://www.hectorzelaya.dev/">
+      HectorZelaya.dev
+    </a>
+    
+    
+      <input type="checkbox" id="menu-toggle" />
+      <label class="menu-button float-right" for="menu-toggle">
+        <i class="fa-solid fa-bars fa-fw" aria-hidden="true"></i>
+      </label>
+      <ul class="navigation-list">
+        
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/about/">About</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/posts/">Blog</a>
+            </li>
+          
+            <li class="navigation-item">
+              <a class="navigation-link " href="/music/">Music</a>
+            </li>
+          
+        
+        
+      </ul>
+    
+  </section>
+</nav>
+
+
+    <div class="content">
+      
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">
+            <a class="title-link" href="https://www.hectorzelaya.dev/posts/personal-cloud-storage-webdav-s3-nixos/">
+              Personal Cloud Storage with WebDAV, S3, and NixOS on EC2
+            </a>
+          </h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fa-solid fa-calendar" aria-hidden="true"></i>
+              <time datetime="2026-08-01T00:00:00Z">
+                August 1, 2026
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              10-minute read
+            </span>
+          </div>
+          <div class="authors">
+  <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <a href="/authors/hector-zelaya/">Hector Zelaya</a></div>
+
+          
+          <div class="tags">
+  <i class="fa-solid fa-tag" aria-hidden="true"></i>
+    <span class="tag">
+      <a href="/tags/aws/">Aws</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/nixos/">Nixos</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/devops/">Devops</a>
+    </span>
+      <span class="separator">•</span>
+    <span class="tag">
+      <a href="/tags/self-hosted/">Self-Hosted</a>
+    </span></div>
+
+        </div>
+      </header>
+
+      <div class="post-content">
+        
+        <p>As a lifelong gamer, I play across several devices — handheld, phone, desktop. <a href="https://www.retroarch.com/"  class="external-link" target="_blank" rel="noopener">RetroArch</a> can sync saves between them, but it requires a <a href="https://en.wikipedia.org/wiki/WebDAV"  class="external-link" target="_blank" rel="noopener">WebDAV</a> server.</p>
+<p>That constraint gave me an excuse to build something I&rsquo;d been wanting anyway: a single storage endpoint I fully control, backed by S3, managed declaratively with NixOS. Once the WebDAV server existed for game saves, expanding it to handle <a href="/music/" >music production</a> stems, database backups, and photos was just a matter of adding path prefixes.</p>
+<p>This post walks through the whole setup. The entire server configuration is a single file.</p>
+<h2 id="webdav-as-a-storage-protocol">
+  WebDAV as a Storage Protocol
+  <a class="heading-link" href="#webdav-as-a-storage-protocol">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>WebDAV (Web Distributed Authoring and Versioning) is an extension of HTTP that adds file management operations — upload, download, list, delete, move. It&rsquo;s been around since 1996 and enjoys broad client support:</p>
+<ul>
+<li><strong>Desktop file managers</strong> — KDE Dolphin, GNOME Files, macOS Finder, Windows Explorer all mount WebDAV shares natively</li>
+<li><strong>Mobile apps</strong> — FolderSync, Solid Explorer, and many others support WebDAV as a sync backend</li>
+<li><strong>Emulators</strong> — RetroArch has built-in WebDAV cloud sync for game saves</li>
+<li><strong>CLI tools</strong> — rclone, curl, cadaver all speak WebDAV</li>
+<li><strong>Backup utilities</strong> — Duplicati and others can target WebDAV endpoints</li>
+</ul>
+<p>Because it&rsquo;s just HTTP under the hood, it works through firewalls, proxies, and NATs without special configuration. Any client that can make HTTPS requests can talk to your storage.</p>
+<p>So how do we expose S3 — which speaks its own API — as a WebDAV endpoint? That&rsquo;s where rclone comes in.</p>
+<h2 id="architecture">
+  Architecture
+  <a class="heading-link" href="#architecture">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>The design is intentionally minimal. Four components, each with a single responsibility:</p>
+<div class="mermaid">
+flowchart LR
+    subgraph Clients
+        A1[RetroArch]
+        A2[rclone CLI]
+        A3[Dolphin]
+        A4[curl]
+        A5[Diffuse]
+    end
+
+    subgraph EC2["EC2 (t4g.small, NixOS)"]
+        B[Caddy :443\nTLS + Auth + CORS]
+        C[rclone serve webdav\n:8080 localhost]
+    end
+
+    D[(S3 Bucket\nversioned)]
+
+    Clients -- HTTPS --> B
+    B -- reverse proxy --> C
+    C -- S3 API\nIAM role --> D
+
+</div>
+
+<ul>
+<li><strong>S3</strong> — Durable, versioned object storage. Cheap at rest, pay-per-request. Handles the &ldquo;don&rsquo;t lose my data&rdquo; concern.</li>
+<li><strong><a href="https://rclone.org/"  class="external-link" target="_blank" rel="noopener">rclone</a></strong> — Runs <code>rclone serve webdav</code> on localhost, translating WebDAV operations into S3 API calls. It only listens on 127.0.0.1, so it doesn&rsquo;t handle auth or TLS itself.</li>
+<li><strong><a href="https://caddyserver.com/"  class="external-link" target="_blank" rel="noopener">Caddy</a></strong> — Internet-facing reverse proxy. Handles automatic TLS (via <a href="https://letsencrypt.org/"  class="external-link" target="_blank" rel="noopener">Let&rsquo;s Encrypt</a>), HTTP basic auth, CORS headers for browser-based clients, and forwards authenticated requests to rclone.</li>
+<li><strong>EC2</strong> — A <code>t4g.small</code> ARM instance running NixOS. Stateless — it&rsquo;s just a proxy. You can terminate and recreate it without losing data.</li>
+</ul>
+<p>The EC2 instance uses an IAM instance role to authenticate with S3, so there are no AWS credentials stored on the server. Caddy handles user-facing authentication with HTTP basic auth over TLS.</p>
+<p>This separation means each layer can be reasoned about independently. S3 versioning protects against accidental deletion. Caddy protects against unauthorized access. NixOS makes the whole thing reproducible.</p>
+<h2 id="infrastructure-with-cloudformation">
+  Infrastructure with CloudFormation
+  <a class="heading-link" href="#infrastructure-with-cloudformation">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>The AWS resources are defined in a single CloudFormation template. This provisions everything: the S3 bucket, EC2 instance, IAM role, security group, Elastic IP, and CloudWatch alarms.</p>
+<p>The template creates an S3 bucket with versioning enabled and per-prefix lifecycle rules — game saves retain 30 days of old versions, backups transition to Glacier Instant Retrieval after 30 days for cost savings. It also sets up the EC2 instance with an IAM role that grants just the necessary S3 permissions — <code>GetObject</code>, <code>PutObject</code>, <code>DeleteObject</code>, and <code>ListBucket</code> — without allowing deletion of object versions (so S3 versioning actually protects the data).</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="cl"><span class="c"># template.yaml — S3 bucket (abbreviated, see repo for full template)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="nt">Resources</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="nt">SavesBucket</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">Type</span><span class="p">:</span><span class="w"> </span><span class="l">AWS::S3::Bucket</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">DeletionPolicy</span><span class="p">:</span><span class="w"> </span><span class="l">Retain</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">UpdateReplacePolicy</span><span class="p">:</span><span class="w"> </span><span class="l">Retain</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">Properties</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">VersioningConfiguration</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">Status</span><span class="p">:</span><span class="w"> </span><span class="l">Enabled</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="c"># Per-prefix lifecycle rules — different retention for different data</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">LifecycleConfiguration</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">Rules</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span>- <span class="nt">Id</span><span class="p">:</span><span class="w"> </span><span class="l">retroarch-version-expiry</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">Status</span><span class="p">:</span><span class="w"> </span><span class="l">Enabled</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">Prefix</span><span class="p">:</span><span class="w"> </span><span class="l">retroarch/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">NoncurrentVersionExpiration</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">NoncurrentDays</span><span class="p">:</span><span class="w"> </span><span class="m">30</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span>- <span class="nt">Id</span><span class="p">:</span><span class="w"> </span><span class="l">media-version-expiry</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">Status</span><span class="p">:</span><span class="w"> </span><span class="l">Enabled</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">Prefix</span><span class="p">:</span><span class="w"> </span><span class="l">media/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">NoncurrentVersionExpiration</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">NoncurrentDays</span><span class="p">:</span><span class="w"> </span><span class="m">30</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="c"># Backups — move to Glacier Instant Retrieval after 30 days,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span><span class="c"># keep 90 days of old versions</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span>- <span class="nt">Id</span><span class="p">:</span><span class="w"> </span><span class="l">backups-to-glacier-ir</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">Status</span><span class="p">:</span><span class="w"> </span><span class="l">Enabled</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">Prefix</span><span class="p">:</span><span class="w"> </span><span class="l">backups/</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">Transitions</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span>- <span class="nt">StorageClass</span><span class="p">:</span><span class="w"> </span><span class="l">GLACIER_IR</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">                </span><span class="nt">TransitionInDays</span><span class="p">:</span><span class="w"> </span><span class="m">30</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">NoncurrentVersionExpiration</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">NoncurrentDays</span><span class="p">:</span><span class="w"> </span><span class="m">90</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span>- <span class="nt">Id</span><span class="p">:</span><span class="w"> </span><span class="l">abort-incomplete-uploads</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">Status</span><span class="p">:</span><span class="w"> </span><span class="l">Enabled</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">            </span><span class="nt">AbortIncompleteMultipartUpload</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">DaysAfterInitiation</span><span class="p">:</span><span class="w"> </span><span class="m">7</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">PublicAccessBlockConfiguration</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">BlockPublicAcls</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">BlockPublicPolicy</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">IgnorePublicAcls</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">RestrictPublicBuckets</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">      </span><span class="nt">BucketEncryption</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="nt">ServerSideEncryptionConfiguration</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">          </span>- <span class="nt">ServerSideEncryptionByDefault</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">              </span><span class="nt">SSEAlgorithm</span><span class="p">:</span><span class="w"> </span><span class="l">AES256</span><span class="w">
+</span></span></span></code></pre></div><p>A few design decisions worth noting:</p>
+<ul>
+<li><strong><code>DeletionPolicy: Retain</code></strong> on the bucket — deleting the CloudFormation stack won&rsquo;t delete your data</li>
+<li><strong>No <code>s3:DeleteObjectVersion</code></strong> in the IAM policy — even if someone gains access to the instance role, they can&rsquo;t purge version history</li>
+<li><strong>Per-prefix lifecycle rules</strong> — game saves get 30-day version retention, backups transition to Glacier IR after 30 days (cheap at rest, still fast to retrieve)</li>
+<li><strong>S3 public access block + encryption</strong> — defense-in-depth even though the bucket policy already restricts access</li>
+<li><strong>CloudWatch auto-recovery alarm</strong> — automatically migrates the instance to healthy hardware on system failures</li>
+<li><strong>Optional email alerting</strong> — if you provide an <code>AlertEmail</code> parameter, SNS will notify you when the instance is down</li>
+</ul>
+<p>Deploy it with:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">aws cloudformation deploy <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --template-file template.yaml <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --stack-name cloud-storage <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --parameter-overrides <span class="se">\
+</span></span></span><span class="line"><span class="cl">    <span class="nv">KeyPairName</span><span class="o">=</span>your-key <span class="se">\
+</span></span></span><span class="line"><span class="cl">    <span class="nv">SshCidr</span><span class="o">=</span>YOUR_IP/32 <span class="se">\
+</span></span></span><span class="line"><span class="cl">    <span class="nv">AlertEmail</span><span class="o">=</span>you@example.com <span class="se">\
+</span></span></span><span class="line"><span class="cl">    <span class="nv">LatestAmiId</span><span class="o">=</span>ami-XXXXXXXXXXXXXXXXX <span class="se">\
+</span></span></span><span class="line"><span class="cl">  --capabilities CAPABILITY_IAM
+</span></span></code></pre></div><p>With the infrastructure running, the next step is configuring the OS. This is where NixOS shines.</p>
+<h2 id="the-nixos-configuration">
+  The NixOS Configuration
+  <a class="heading-link" href="#the-nixos-configuration">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>The entire server — services, firewall, hardening, fail2ban, auto-upgrades — is defined in a single <code>configuration.nix</code> file. One declarative file that produces the same system every time, without imperative setup scripts or multi-step SSH sessions. The <a href="https://github.com/nuxero/personal-cloud-storage"  class="external-link" target="_blank" rel="noopener">full configuration is in the repo</a> — below are the key pieces.</p>
+<p>Here&rsquo;s the rclone service definition. It runs rclone as a systemd service, serving the S3 bucket as WebDAV on localhost:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-nix" data-lang="nix"><span class="line"><span class="cl"><span class="c1"># rclone WebDAV service — translates WebDAV to S3 API calls</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># Only listens on localhost; Caddy handles internet-facing traffic</span>
+</span></span><span class="line"><span class="cl"><span class="n">systemd</span><span class="o">.</span><span class="n">services</span><span class="o">.</span><span class="n">rclone-webdav</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">description</span> <span class="o">=</span> <span class="s2">&#34;rclone WebDAV server (S3 backend)&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">after</span> <span class="o">=</span> <span class="p">[</span> <span class="s2">&#34;network-online.target&#34;</span> <span class="p">];</span>
+</span></span><span class="line"><span class="cl">  <span class="n">wants</span> <span class="o">=</span> <span class="p">[</span> <span class="s2">&#34;network-online.target&#34;</span> <span class="p">];</span>
+</span></span><span class="line"><span class="cl">  <span class="n">wantedBy</span> <span class="o">=</span> <span class="p">[</span> <span class="s2">&#34;multi-user.target&#34;</span> <span class="p">];</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">  <span class="n">serviceConfig</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Type</span> <span class="o">=</span> <span class="s2">&#34;simple&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ExecStart</span> <span class="o">=</span> <span class="n">lib</span><span class="o">.</span><span class="n">concatStringsSep</span> <span class="s2">&#34; &#34;</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">&#34;</span><span class="si">${</span><span class="n">pkgs</span><span class="o">.</span><span class="n">rclone</span><span class="si">}</span><span class="s2">/bin/rclone serve webdav&#34;</span>
+</span></span><span class="line"><span class="cl">      <span class="c1"># Use IAM instance role for auth (env_auth=true), no keys on disk</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">&#34;:s3,provider=AWS,region=</span><span class="si">${</span><span class="n">secrets</span><span class="o">.</span><span class="n">s3Region</span><span class="si">}</span><span class="s2">,env_auth=true:</span><span class="si">${</span><span class="n">secrets</span><span class="o">.</span><span class="n">s3Bucket</span><span class="si">}</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">&#34;--addr 127.0.0.1:8080&#34;</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">&#34;--vfs-cache-mode minimal&#34;</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">&#34;--vfs-cache-max-age 1h&#34;</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">&#34;--cache-dir /var/cache/rclone&#34;</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">&#34;--server-read-timeout 5m&#34;</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">&#34;--server-write-timeout 5m&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Restart</span> <span class="o">=</span> <span class="s2">&#34;always&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">RestartSec</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># systemd hardening — minimal attack surface</span>
+</span></span><span class="line"><span class="cl">    <span class="n">NoNewPrivileges</span> <span class="o">=</span> <span class="no">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ProtectSystem</span> <span class="o">=</span> <span class="s2">&#34;strict&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ProtectHome</span> <span class="o">=</span> <span class="no">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">PrivateTmp</span> <span class="o">=</span> <span class="no">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">CacheDirectory</span> <span class="o">=</span> <span class="s2">&#34;rclone&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">DynamicUser</span> <span class="o">=</span> <span class="no">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></div><p>The <code>--server-read-timeout</code> and <code>--server-write-timeout</code> flags prevent zombie connections from tying up resources. <code>CacheDirectory = &quot;rclone&quot;</code> tells systemd to manage <code>/var/cache/rclone</code> for the service, which pairs with <code>ProtectSystem = &quot;strict&quot;</code> — without it, the VFS cache would have nowhere to write.</p>
+<p>And Caddy, which handles TLS termination, basic auth, and CORS. The routing is path-based — each user only has access to their designated prefix:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-nix" data-lang="nix"><span class="line"><span class="cl"><span class="c1"># Caddy — automatic TLS + path-based auth + CORS + reverse proxy</span>
+</span></span><span class="line"><span class="cl"><span class="n">services</span><span class="o">.</span><span class="n">caddy</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">enable</span> <span class="o">=</span> <span class="no">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">virtualHosts</span><span class="o">.</span><span class="si">${</span><span class="n">secrets</span><span class="o">.</span><span class="n">domain</span><span class="si">}</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">extraConfig</span> <span class="o">=</span> <span class="s1">&#39;&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s1">      # CORS preflight for Diffuse (browser-based music player at diffuse.sh)
+</span></span></span><span class="line"><span class="cl"><span class="s1">      @cors_preflight method OPTIONS
+</span></span></span><span class="line"><span class="cl"><span class="s1">      handle @cors_preflight {
+</span></span></span><span class="line"><span class="cl"><span class="s1">          header Access-Control-Allow-Origin &#34;https://diffuse.sh&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s1">          header Access-Control-Allow-Methods &#34;GET, HEAD, PROPFIND, OPTIONS&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s1">          header Access-Control-Allow-Headers &#34;Authorization, Content-Type, Depth, Range&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s1">          header Access-Control-Allow-Credentials &#34;true&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s1">          header Access-Control-Max-Age &#34;86400&#34;
+</span></span></span><span class="line"><span class="cl"><span class="s1">          respond 204
+</span></span></span><span class="line"><span class="cl"><span class="s1">      }
+</span></span></span><span class="line"><span class="cl"><span class="s1">
+</span></span></span><span class="line"><span class="cl"><span class="s1">      # Each path prefix gets its own auth scope.
+</span></span></span><span class="line"><span class="cl"><span class="s1">      # Example: RetroArch user can only access /retroarch/*
+</span></span></span><span class="line"><span class="cl"><span class="s1">      @retroarch_path path /retroarch/*
+</span></span></span><span class="line"><span class="cl"><span class="s1">      handle @retroarch_path {
+</span></span></span><span class="line"><span class="cl"><span class="s1">          basic_auth {
+</span></span></span><span class="line"><span class="cl"><span class="s1">              </span><span class="si">${</span><span class="n">secrets</span><span class="o">.</span><span class="n">retroarchUser</span><span class="si">}</span><span class="s1"> </span><span class="si">${</span><span class="n">secrets</span><span class="o">.</span><span class="n">retroarchPasswordHash</span><span class="si">}</span><span class="s1">
+</span></span></span><span class="line"><span class="cl"><span class="s1">              </span><span class="si">${</span><span class="n">secrets</span><span class="o">.</span><span class="n">adminUser</span><span class="si">}</span><span class="s1"> </span><span class="si">${</span><span class="n">secrets</span><span class="o">.</span><span class="n">adminPasswordHash</span><span class="si">}</span><span class="s1">
+</span></span></span><span class="line"><span class="cl"><span class="s1">          }
+</span></span></span><span class="line"><span class="cl"><span class="s1">          reverse_proxy localhost:8080
+</span></span></span><span class="line"><span class="cl"><span class="s1">      }
+</span></span></span><span class="line"><span class="cl"><span class="s1">
+</span></span></span><span class="line"><span class="cl"><span class="s1">      # Same pattern for /media/* (dj user) and a catch-all (admin only).
+</span></span></span><span class="line"><span class="cl"><span class="s1">      # See full config in the repo.
+</span></span></span><span class="line"><span class="cl"><span class="s1">    &#39;&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="p">};</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></div><p>Caddy automatically obtains and renews TLS certificates from Let&rsquo;s Encrypt, so you don&rsquo;t need certbot cron jobs or manual renewal.</p>
+<p>The CORS configuration is needed because <a href="https://diffuse.sh"  class="external-link" target="_blank" rel="noopener">Diffuse</a> is a static web app that talks directly to your WebDAV server from the browser. Without these headers, the browser would block cross-origin requests. The preflight handler responds to <code>OPTIONS</code> without requiring authentication.</p>
+<p>The configuration also includes fail2ban to protect against brute-force attacks and bot scanning. The interesting part is how the auth filter avoids false positives on WebDAV clients:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-nix" data-lang="nix"><span class="line"><span class="cl"><span class="c1"># fail2ban filter — only matches 401s where credentials WERE provided</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># (Authorization header present) but were wrong. Does NOT match the initial</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 401 challenge that non-preemptive clients like Dolphin/KIO trigger.</span>
+</span></span><span class="line"><span class="cl"><span class="n">environment</span><span class="o">.</span><span class="n">etc</span><span class="o">.</span><span class="s2">&#34;fail2ban/filter.d/caddy-auth.local&#34;</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="s1">&#39;&#39;
+</span></span></span><span class="line"><span class="cl"><span class="s1">  [Definition]
+</span></span></span><span class="line"><span class="cl"><span class="s1">  failregex = &#34;remote_ip&#34;:&#34;&lt;HOST&gt;&#34;.*&#34;Authorization&#34;:\[&#34;REDACTED&#34;\].*&#34;status&#34;:401
+</span></span></span><span class="line"><span class="cl"><span class="s1">  datepattern = &#34;ts&#34;:{Epoch}
+</span></span></span><span class="line"><span class="cl"><span class="s1">  ignoreregex =
+</span></span></span><span class="line"><span class="cl"><span class="s1">&#39;&#39;</span><span class="p">;</span>
+</span></span></code></pre></div><p>WebDAV clients that don&rsquo;t use preemptive authentication send every request without credentials first, receive a 401 challenge, then retry with the <code>Authorization</code> header. By only matching 401 responses where an <code>Authorization</code> header was present, we exclusively catch actual failed login attempts. This lets us use a strict threshold (5 failed attempts in 5 minutes) without risking false positives on legitimate clients.</p>
+<p>There&rsquo;s also a <code>caddy-botscan</code> jail that catches 404 floods from vulnerability scanners probing for <code>/wp-admin</code>, <code>/.env</code>, and similar paths. Both jails use progressive banning with exponential backoff — repeat offenders accumulate longer bans across jails.</p>
+<p>The secrets (domain, passwords, SSH keys) live in a separate <code>secrets.nix</code> that isn&rsquo;t tracked in git. Password hashes are generated with Caddy&rsquo;s built-in tool:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nix-shell -p caddy --run <span class="s2">&#34;caddy hash-password --plaintext &#39;YOUR_PASSWORD&#39;&#34;</span>
+</span></span></code></pre></div><p>A couple of operational tweaks worth mentioning. The NixOS AMI ships with a small EFI partition (~249MB), which fills up quickly as you accumulate system generations. Limiting boot entries prevents that:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-nix" data-lang="nix"><span class="line"><span class="cl"><span class="c1"># Prevent /boot from filling up — NixOS AMIs have a small EFI partition</span>
+</span></span><span class="line"><span class="cl"><span class="n">boot</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">systemd-boot</span><span class="o">.</span><span class="n">configurationLimit</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Garbage-collect old generations daily (keep only last 3 days)</span>
+</span></span><span class="line"><span class="cl"><span class="n">nix</span><span class="o">.</span><span class="n">gc</span> <span class="o">=</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="n">automatic</span> <span class="o">=</span> <span class="no">true</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">dates</span> <span class="o">=</span> <span class="s2">&#34;daily&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">options</span> <span class="o">=</span> <span class="s2">&#34;--delete-older-than 3d&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Deduplicate identical files in the Nix store</span>
+</span></span><span class="line"><span class="cl"><span class="n">nix</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">auto-optimise-store</span> <span class="o">=</span> <span class="no">true</span><span class="p">;</span>
+</span></span></code></pre></div><p>Once both files are in place on the server, a single command brings everything up:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nixos-rebuild switch
+</span></span></code></pre></div><p>From this point forward, the system auto-upgrades daily, garbage-collects old generations, and restarts crashed services automatically. What does day-to-day maintenance look like? Editing the config file and running <code>nixos-rebuild switch</code> again. That&rsquo;s it.</p>
+<h2 id="connecting-clients">
+  Connecting Clients
+  <a class="heading-link" href="#connecting-clients">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>The storage is organized by path prefix. Each client targets its own directory:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Use case</th>
+          <th>URL</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Game saves</td>
+          <td><code>https://storage.yourdomain.com/retroarch/</code></td>
+      </tr>
+      <tr>
+          <td>Music (Diffuse)</td>
+          <td><code>https://storage.yourdomain.com/media/music/</code></td>
+      </tr>
+      <tr>
+          <td>Backups</td>
+          <td><code>https://storage.yourdomain.com/backups/</code></td>
+      </tr>
+      <tr>
+          <td>Media</td>
+          <td><code>https://storage.yourdomain.com/media/</code></td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="retroarch">
+  RetroArch
+  <a class="heading-link" href="#retroarch">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>RetroArch has native cloud sync support. Point it at your WebDAV endpoint:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Setting</th>
+          <th>Value</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Cloud Sync</td>
+          <td>ON</td>
+      </tr>
+      <tr>
+          <td>Backend</td>
+          <td>WebDAV</td>
+      </tr>
+      <tr>
+          <td>URL</td>
+          <td><code>https://storage.yourdomain.com/retroarch/</code></td>
+      </tr>
+      <tr>
+          <td>Username</td>
+          <td><code>retroarch</code></td>
+      </tr>
+      <tr>
+          <td>Password</td>
+          <td><em>(your password)</em></td>
+      </tr>
+  </tbody>
+</table>
+<p>Game saves now sync across every device running RetroArch — your handheld, your phone, your desktop — without touching any third-party service.</p>
+<h3 id="diffuse-music-player">
+  Diffuse (music player)
+  <a class="heading-link" href="#diffuse-music-player">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p><a href="https://diffuse.sh"  class="external-link" target="_blank" rel="noopener">Diffuse</a> is a web-based music player that connects directly to storage backends — including WebDAV. It runs entirely in the browser as a static app hosted at <code>diffuse.sh</code>, which is why we configured CORS headers in Caddy.</p>
+<p>Upload your music library with rclone:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">rclone copy ~/Music cloud:media/music/ --progress
+</span></span></code></pre></div><p>Then add it as a source in Diffuse:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Field</th>
+          <th>Value</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>Type</td>
+          <td>WebDAV</td>
+      </tr>
+      <tr>
+          <td>URL</td>
+          <td><code>https://storage.yourdomain.com/media/music/</code></td>
+      </tr>
+      <tr>
+          <td>Username</td>
+          <td><code>dj</code></td>
+      </tr>
+      <tr>
+          <td>Password</td>
+          <td><em>(your password)</em></td>
+      </tr>
+  </tbody>
+</table>
+<p>Diffuse reads metadata from the files themselves, so organize your library however you like — by artist, album, genre, or flat. It plays whatever your browser supports (MP3, FLAC, OGG, WAV, AAC, OPUS).</p>
+<h3 id="rclone-cli">
+  rclone (CLI)
+  <a class="heading-link" href="#rclone-cli">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>For backups and bulk transfers, rclone itself can talk to your endpoint:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Create a remote pointing to your WebDAV server</span>
+</span></span><span class="line"><span class="cl">rclone config create cloud webdav <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nv">url</span><span class="o">=</span>https://storage.yourdomain.com <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="nv">user</span><span class="o">=</span>admin <span class="nv">pass</span><span class="o">=</span><span class="k">$(</span>rclone obscure <span class="s1">&#39;PASSWORD&#39;</span><span class="k">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Sync a directory</span>
+</span></span><span class="line"><span class="cl">rclone copy ./photos cloud:media/photos/ --progress
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Push a database backup</span>
+</span></span><span class="line"><span class="cl">rclone copyto ./db.sql.gz cloud:backups/db-2026-07-27.sql.gz
+</span></span></code></pre></div><h3 id="file-managers">
+  File managers
+  <a class="heading-link" href="#file-managers">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>KDE Dolphin, GNOME Files, and macOS Finder can mount WebDAV shares directly. In Dolphin, type <code>webdavs://storage.yourdomain.com</code> in the address bar and authenticate.</p>
+<h3 id="curl-one-liners">
+  curl (one-liners)
+  <a class="heading-link" href="#curl-one-liners">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h3>
+<p>For scripting and cron jobs:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># Upload</span>
+</span></span><span class="line"><span class="cl">curl -T backup.tar.gz -u admin:PASSWORD <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="s2">&#34;https://storage.yourdomain.com/backups/backup.tar.gz&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># Download</span>
+</span></span><span class="line"><span class="cl">curl -u admin:PASSWORD -O <span class="se">\
+</span></span></span><span class="line"><span class="cl">  <span class="s2">&#34;https://storage.yourdomain.com/backups/backup.tar.gz&#34;</span>
+</span></span></code></pre></div><h2 id="tradeoffs-and-cost">
+  Tradeoffs and Cost
+  <a class="heading-link" href="#tradeoffs-and-cost">
+    <i class="fa-solid fa-link" aria-hidden="true" title="Link to heading"></i>
+    <span class="sr-only">Link to heading</span>
+  </a>
+</h2>
+<p>Let&rsquo;s be honest about what this setup is and isn&rsquo;t.</p>
+<p><strong>What you get:</strong></p>
+<ul>
+<li>Around $5/month with a <a href="https://aws.amazon.com/savingsplans/"  class="external-link" target="_blank" rel="noopener">Savings Plan</a> (about $12/month on-demand for t4g.small EC2 + minimal S3 usage)</li>
+<li>Full control over your data — no third party reads your files</li>
+<li>Universal client support via WebDAV</li>
+<li>Declarative, reproducible server config with NixOS rollback safety</li>
+<li>S3 versioning as a safety net against accidental deletion</li>
+</ul>
+<p><strong>What you don&rsquo;t get:</strong></p>
+<ul>
+<li>A polished web UI (if you want one, consider <a href="https://filebrowser.org/"  class="external-link" target="_blank" rel="noopener">FileBrowser</a> in front of the same stack)</li>
+<li>Automatic file conflict resolution (WebDAV is last-write-wins)</li>
+<li>Mobile push sync (you&rsquo;ll need a sync app that polls)</li>
+<li>Zero ops — the EC2 instance is still yours to manage, though NixOS auto-upgrades handle most of it</li>
+</ul>
+<p>The EC2 instance is entirely stateless. If it dies, you deploy a new one, copy the same <code>configuration.nix</code>, run <code>nixos-rebuild switch</code>, and you&rsquo;re back online. Your data never left S3.</p>
+<p>For the full source code — CloudFormation template, NixOS configuration, and secrets template — check out the <a href="https://github.com/nuxero/personal-cloud-storage"  class="external-link" target="_blank" rel="noopener">repository on GitHub</a>.</p>
+
+      </div>
+
+
+      <footer>
+        
+
+
+        
+        
+        
+        
+        
+        
+        
+      </footer>
+    </article>
+
+    
+  </section>
+
+    </div>
+
+    <footer class="footer">
+  <section class="container">
+    ©
+    
+      2015 -
+    
+    2026
+     Hector Zelaya 
+    ·
+    
+    Powered by <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> & <a href="https://github.com/luizdepra/hugo-coder/" target="_blank" rel="noopener">Coder</a>.
+    
+  </section>
+</footer>
+
+  </main>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@9.3.0/dist/mermaid.min.js"
+    integrity="sha256-QdTG1YTLLTwD3b95jLqFxpQX9uYuJMNAtVZgwKX4oYU=" crossorigin="anonymous"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true });
+  </script>
+  
+
+  
+  
+  <script src="/js/coder.min.6ae284be93d2d19dad1f02b0039508d9aab3180a12a06dcc71b0b0ef7825a317.js" integrity="sha256-auKEvpPS0Z2tHwKwA5UI2aqzGAoSoG3McbCw73gloxc="></script>
+  
+
+  
+
+  
+
+
+  
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-DM273NM2FB"></script>
+      <script>
+        var doNotTrack = false;
+        if ( true ) {
+          var dnt = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack);
+          var doNotTrack = (dnt == "1" || dnt == "yes");
+        }
+        if (!doNotTrack) {
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-DM273NM2FB');
+        }
+      </script>
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+</body>
+
+</html>

@@ -6,8 +6,15 @@
     <description>Recent content in Posts on HectorZelaya.dev</description>
     <generator>Hugo</generator>
     <language>en</language>
-    <lastBuildDate>Sun, 26 Jul 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 01 Aug 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://www.hectorzelaya.dev/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Personal Cloud Storage with WebDAV, S3, and NixOS on EC2</title>
+      <link>https://www.hectorzelaya.dev/posts/personal-cloud-storage-webdav-s3-nixos/</link>
+      <pubDate>Sat, 01 Aug 2026 00:00:00 +0000</pubDate>
+      <guid>https://www.hectorzelaya.dev/posts/personal-cloud-storage-webdav-s3-nixos/</guid>
+      <description>&lt;p&gt;As a lifelong gamer, I play across several devices — handheld, phone, desktop. &lt;a href=&#34;https://www.retroarch.com/&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;RetroArch&lt;/a&gt; can sync saves between them, but it requires a &lt;a href=&#34;https://en.wikipedia.org/wiki/WebDAV&#34;  class=&#34;external-link&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;WebDAV&lt;/a&gt; server.&lt;/p&gt;&#xA;&lt;p&gt;That constraint gave me an excuse to build something I&amp;rsquo;d been wanting anyway: a single storage endpoint I fully control, backed by S3, managed declaratively with NixOS. Once the WebDAV server existed for game saves, expanding it to handle &lt;a href=&#34;https://www.hectorzelaya.dev/music/&#34; &gt;music production&lt;/a&gt; stems, database backups, and photos was just a matter of adding path prefixes.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>NixOS: The Good, The Bad, and The Awesome</title>
       <link>https://www.hectorzelaya.dev/posts/nixos-the-good-bad-and-the-awesome/</link>
